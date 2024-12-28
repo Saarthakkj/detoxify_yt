@@ -47,4 +47,8 @@ div that contain the video card : <ytd-rich-item-renderer class="style-scope ytd
 
 
 '''
+
+
+#dataset : https://www.kaggle.com/datasets/datasnaek/youtube-new?select=USvideos.csv
+#dataset2 : https://www.kaggle.com/datasets/rsrishav/youtube-trending-video-dataset?select=US_youtube_trending_data.csv
     
