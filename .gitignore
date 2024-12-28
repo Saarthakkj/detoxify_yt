@@ -3,3 +3,7 @@ secrets.json
 US_youtube_trending_data.csv.zip
 USvideos.csv.zip
 virtual/
+US_youtube_trending_data.csv
+USvideos.csv
+filtered_data.csv
+filtered_data1.csv
