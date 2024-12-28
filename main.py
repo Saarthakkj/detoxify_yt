@@ -1,26 +1,41 @@
-import selenium
-from selenium import webdriver
-import pandas as pd
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
+#parsing the json response : sample_response.json
+import json
+
+title_keyword = []
+# Function to recursively iterate through a nested JSON object
+def iterate_nested_json(data_list , title_keyword): 
+    for data in data_list:
+        # print("hello world")
+        if isinstance(data, dict):  # Check if the data is a dictionary
+            title_keyword_pair = []
+            # print(data)
+            for key, value in data.items():
+                # print(key , value)
+                if key == "title":
+                    title_keyword_pair.append(value)
+                if key == "discovery_input":
+                    if isinstance(value  , dict):
+                        for key , value in value.items():
+                            if key == "keyword":
+                                title_keyword_pair.append(value)
+                                title_keyword.append(title_keyword_pair)
+                                # print(title_keyword_pair)
+                # print(f"Key: {key}")  # Print the key
+                # iterate_nested_json(value)  # Recursively call for the value
+
+with open('sample_response.json', 'r') as file:
+    json_data = json.load(file)  # Load the JSON data
+    iterate_nested_json(json_data , title_keyword)  # Call the function to iterate through the JSON
 
 
-def scrapeYT(): # Our function for scraping   
-    servicee = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service = servicee)
-    driver.get("youtube.com")
-    try:
-        elem = WebDriverWait(driver , 30).until(EC.presence_of_element_located((By.CLASS_NAME , "style-scope ytd-rich-grid-render" )))
-    finally: 
-        print("loaded")
+print(title_keyword)
 
-scrapeYT()
+title_keyword_df = []
+with open('main_response.json', 'r') as file:
+    json_data = json.load(file)  # Load the JSON data
+    iterate_nested_json(json_data , title_keyword_df)  # Call the function to iterate through the JSON
+
+print(title_keyword_df)
 
 
 #THIS IS THE MAIN DIV : <div id = "contents" class = "style-scope ytd-rich-grid-render"
