@@ -49,3 +49,4 @@ ENV/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+bert-yt_classifier/
