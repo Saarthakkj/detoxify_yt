@@ -32,7 +32,32 @@ class TextInput(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Detoxify API is running"}
+    return {"status": "ok", "message": "Detoxify API is running"}
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "model_loaded": model is not None,
+        "tokenizer_loaded": tokenizer is not None
+    }
+
+@app.get("/model-info")
+async def model_info():
+    return {
+        "model_name": "curlyoreki/detoxifying_yt",
+        "labels": label_mapping,
+        "max_sequence_length": 128
+    }
+
+@app.get("/test-predict")
+async def test_predict():
+    test_texts = [
+        TextInput(text="How do I implement a binary search tree?"),
+        TextInput(text="What's the best opening in chess?"),
+        TextInput(text="Can someone help me solve this quadratic equation?")
+    ]
+    return await predict(test_texts)
 
 @app.post("/predict")
 async def predict(inputs: List[TextInput]):
@@ -57,4 +82,4 @@ async def predict(inputs: List[TextInput]):
         return results
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))

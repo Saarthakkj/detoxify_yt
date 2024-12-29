@@ -1,6 +1,5 @@
 import requests
 
-# Replace with your Vercel deployment URL (without trailing slash)
 url = "https://detoxify-yt.vercel.app"  # Remove trailing slash
 
 # Test data
