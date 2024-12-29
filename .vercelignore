@@ -1,0 +1,32 @@
+# Directories
+__pycache__/
+.ipynb_checkpoints/
+virtual/
+venv/
+bert-yt_classifier/
+.git/
+
+# Data files
+*.csv
+*.zip
+*.json
+sample_response.json
+main_response.json
+USvideos.csv*
+US_youtube_trending_data.csv*
+
+# Notebooks and temp files
+*.ipynb
+znskjlnd
+classifier-checkpoint.ipynb
+
+# Keep essential files
+!vercel.json
+!api/vercel.json
+!package.json
+
+# Python cache
+*.pyc
+*.pyo
+*.pyd
+.Python 

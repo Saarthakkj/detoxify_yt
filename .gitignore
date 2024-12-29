@@ -52,3 +52,4 @@ ENV/
 bert-yt_classifier/
 title_keyword_pairs.csv
 title_keyword_pairs.txt
+.vercel

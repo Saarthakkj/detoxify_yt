@@ -1,18 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from transformers import BertTokenizer, BertForSequenceClassification
 import torch
-import logging
+from transformers import BertTokenizer, BertForSequenceClassification
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Initialize FastAPI app
 app = FastAPI()
 
-# Add CORS middleware
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -21,25 +15,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load model and tokenizer
-try:
-    model_path = "bert-yt_classifier/checkpoint-1460"
-    tokenizer = BertTokenizer.from_pretrained(model_path)
-    model = BertForSequenceClassification.from_pretrained(model_path)
-    model.eval()
-except Exception as e:
-    logger.error(f"Failed to load model: {e}")
-    raise
+# Load model from Hugging Face Hub
+MODEL_ID = "curlyoreki/detoxifying_yt"
+tokenizer = BertTokenizer.from_pretrained(MODEL_ID)
+model = BertForSequenceClassification.from_pretrained(MODEL_ID)
+model.eval()
 
 class TextInput(BaseModel):
     text: str
+
+@app.get("/")
+async def root():
+    return {"message": "YouTube Content Classifier API"}
 
 @app.post("/predict")
 async def predict(inputs: list[TextInput]):
     try:
         results = []
         for input in inputs:
-            # Tokenize input text
             encoded = tokenizer(
                 input.text,
                 padding=True,
@@ -48,11 +41,9 @@ async def predict(inputs: list[TextInput]):
                 return_tensors="pt"
             )
             
-            # Perform inference
             with torch.no_grad():
                 output = model(**encoded)
             
-            # Process outputs
             probabilities = torch.nn.functional.softmax(output.logits, dim=-1)
             predicted_class = torch.argmax(probabilities, dim=-1).item()
             
@@ -67,12 +58,8 @@ async def predict(inputs: list[TextInput]):
         
         return results
     except Exception as e:
-        logger.error(f"Prediction error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error processing request: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy"} 

@@ -6,7 +6,6 @@ __pycache__
 env/
 venv/
 .env
-*.ipynb
 .git
 .gitignore
-README.md 
+.ipynb_checkpoints 
