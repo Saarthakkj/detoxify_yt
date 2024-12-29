@@ -48,7 +48,7 @@ ENV/
 *.swo
 
 # Jupyter Notebook
-.ipynb_checkpoints
+.ipynb_checkpoints/
 bert-yt_classifier/
 title_keyword_pairs.csv
 title_keyword_pairs.txt
