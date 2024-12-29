@@ -5,6 +5,13 @@ USvideos.csv.zip
 virtual/
 main_response.json
 sample_response.json
+US_youtube_trending_data.csv
+USvideos.csv
+
+filtered_data.csv
+filtered_data1.csv
+sample_response.json
+
 
 # Python
 __pycache__/
