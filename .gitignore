@@ -50,3 +50,5 @@ ENV/
 # Jupyter Notebook
 .ipynb_checkpoints
 bert-yt_classifier/
+title_keyword_pairs.csv
+title_keyword_pairs.txt
