@@ -28,14 +28,26 @@ with open('sample_response.json', 'r') as file:
     iterate_nested_json(json_data , title_keyword)  # Call the function to iterate through the JSON
 
 
-print(title_keyword)
+# print(title_keyword)
 
 title_keyword_df = []
 with open('main_response.json', 'r') as file:
     json_data = json.load(file)  # Load the JSON data
     iterate_nested_json(json_data , title_keyword_df)  # Call the function to iterate through the JSON
 
-print(title_keyword_df)
+# print(title_keyword_df)
+
+# Write the title-keyword pairs to a file
+with open('title_keyword_pairs.csv', 'w', encoding='utf-8', newline='') as f:
+    f.write("Title,Keyword\n")
+    for pair in title_keyword:
+        f.write(f"\"{pair[0]}\",{pair[1]}\n")
+    
+    for pair in title_keyword_df:
+        f.write(f"\"{pair[0]}\",{pair[1]}\n")
+
+
+print('done')
 
 
 #THIS IS THE MAIN DIV : <div id = "contents" class = "style-scope ytd-rich-grid-render"
