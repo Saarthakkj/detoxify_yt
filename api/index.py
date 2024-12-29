@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import List
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
 
@@ -15,51 +16,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load model from Hugging Face Hub
-MODEL_ID = "curlyoreki/detoxifying_yt"
-tokenizer = BertTokenizer.from_pretrained(MODEL_ID)
-model = BertForSequenceClassification.from_pretrained(MODEL_ID)
-model.eval()
+# Model loading
+tokenizer = BertTokenizer.from_pretrained('curlyoreki/detoxifying_yt')
+model = BertForSequenceClassification.from_pretrained('curlyoreki/detoxifying_yt')
+
+label_mapping = {
+    0: "other",
+    1: "chess",
+    2: "coding", 
+    3: "math"
+}
 
 class TextInput(BaseModel):
     text: str
 
 @app.get("/")
 async def root():
-    return {"message": "YouTube Content Classifier API"}
+    return {"message": "Detoxify API is running"}
 
 @app.post("/predict")
-async def predict(inputs: list[TextInput]):
+async def predict(inputs: List[TextInput]):
     try:
-        results = []
-        for input in inputs:
-            encoded = tokenizer(
-                input.text,
-                padding=True,
-                truncation=True,
-                max_length=128,
-                return_tensors="pt"
-            )
-            
-            with torch.no_grad():
-                output = model(**encoded)
-            
-            probabilities = torch.nn.functional.softmax(output.logits, dim=-1)
-            predicted_class = torch.argmax(probabilities, dim=-1).item()
-            
-            label_mapping = {0: "other", 1: "chess", 2: "coding", 3: "math"}
-            predicted_label = label_mapping.get(predicted_class, "Unknown")
-            
-            results.append({
-                "input_text": input.text,
-                "predicted_label": predicted_label,
-                "confidence": float(probabilities[0][predicted_class])
-            })
+        texts = [item.text for item in inputs]
+        encoded_inputs = tokenizer(texts, padding=True, truncation=True, max_length=128, return_tensors='pt')
         
+        with torch.no_grad():
+            outputs = model(**encoded_inputs)
+        
+        probabilities = torch.nn.functional.softmax(outputs.logits, dim=-1)
+        predicted_classes = torch.argmax(probabilities, dim=-1)
+        
+        results = []
+        for idx, pred_class in enumerate(predicted_classes):
+            probs = {label: float(prob) for label, prob in zip(label_mapping.values(), probabilities[idx])}
+            results.append({
+                "prediction": label_mapping[int(pred_class)],
+                "probabilities": probs
+            })
+            
         return results
+    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"} 
+        raise HTTPException(status_code=500, detail=str(e)) 

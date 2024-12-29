@@ -8,10 +8,13 @@
     ],
     "routes": [
         {
-            "handle": "filesystem"
+            "src": "/api/(.*)",
+            "dest": "api/index.py",
+            "methods": ["GET", "POST", "OPTIONS"],
+            "continue": true
         },
         {
-            "src": "/.*",
+            "src": "/(.*)",
             "dest": "api/index.py"
         }
     ]

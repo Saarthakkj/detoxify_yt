@@ -1,10 +1,43 @@
-# Directories
+# Python
 __pycache__/
-.ipynb_checkpoints/
-virtual/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
 venv/
+ENV/
+.env
+virtual/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
 bert-yt_classifier/
-.git/
+title_keyword_pairs.csv
+title_keyword_pairs.txt
 
 # Data files
 *.csv
@@ -14,19 +47,25 @@ sample_response.json
 main_response.json
 USvideos.csv*
 US_youtube_trending_data.csv*
+filtered_data.csv
+filtered_data1.csv
 
-# Notebooks and temp files
-*.ipynb
-znskjlnd
-classifier-checkpoint.ipynb
+# Git related
+.git/
+.gitignore
+.gitattributes
+.vercel
 
 # Keep essential files
 !vercel.json
 !api/vercel.json
 !package.json
+!requirements.txt
 
-# Python cache
-*.pyc
-*.pyo
-*.pyd
-.Python 
+# Docker related
+.dockerignore
+Dockerfile
+
+# Documentation
+README.md 
+virtual/
