@@ -23,19 +23,48 @@ def iterate_nested_json(data_list , title_keyword):
                 # print(f"Key: {key}")  # Print the key
                 # iterate_nested_json(value)  # Recursively call for the value
 
-with open('sample_response.json', 'r') as file:
+# with open('sample_response.json', 'r') as file:
+#     json_data = json.load(file)  # Load the JSON data
+#     iterate_nested_json(json_data , title_keyword)  # Call the function to iterate through the JSON
+
+
+# print(title_keyword)
+
+# title_keyword_df = []
+# with open('main_response.json', 'r') as file:
+#     json_data = json.load(file)  # Load the JSON data
+#     iterate_nested_json(json_data , title_keyword_df)  # Call the function to iterate through the JSON
+
+# print(title_keyword_df)
+
+# Write the title-keyword pairs to a file
+# with open('title_keyword_pairs.csv', 'w', encoding='utf-8', newline='') as f:
+#     f.write("Title,Keyword\n")
+#     for pair in title_keyword:
+#         f.write(f"\"{pair[0]}\",{pair[1]}\n")
+    
+#     for pair in title_keyword_df:
+#         f.write(f"\"{pair[0]}\",{pair[1]}\n")
+
+
+# print('done')
+
+
+titles_and_keywords  = []
+with open('another_main.json', 'r') as file:
     json_data = json.load(file)  # Load the JSON data
-    iterate_nested_json(json_data , title_keyword)  # Call the function to iterate through the JSON
+    iterate_nested_json(json_data , titles_and_keywords)  # Call the function to iterate through the JSON
 
+with open('another_title_keyword_pairs.csv', 'w', encoding='utf-8', newline='') as f:
+    f.write("Title,Keyword\n")
+    for pair in titles_and_keywords:
+        f.write(f"\"{pair[0]}\",{pair[1]}\n")
+    
+    for pair in titles_and_keywords:
+        f.write(f"\"{pair[0]}\",{pair[1]}\n")
 
-print(title_keyword)
+print('done')
 
-title_keyword_df = []
-with open('main_response.json', 'r') as file:
-    json_data = json.load(file)  # Load the JSON data
-    iterate_nested_json(json_data , title_keyword_df)  # Call the function to iterate through the JSON
-
-print(title_keyword_df)
 
 
 #THIS IS THE MAIN DIV : <div id = "contents" class = "style-scope ytd-rich-grid-render"
