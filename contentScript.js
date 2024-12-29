@@ -12,41 +12,65 @@ const scrapperTitleVector = () => {
     const titleVector = elements.map((el) => {
         const titleElement = el.querySelector("h3 a[title]");
         if (titleElement) {
-            return titleElement.title.trim()
+            return titleElement.title.trim();
         }
         return null;
     });
-    return titleVector;
+
+    const filteredArray = titleVector.filter((value) => value !== null);
+    return filteredArray;
+};
+
+const getTitlesAfterML = async (searchString) => {
+    const response = await fetch("http://localhost:8000/predict", {
+        method: "POST",
+        body: JSON.stringify({ searchString }),
+    });
+    const data = await response.json();
+    console.log("[PRAKHAR]: [contentScript.js]: data found to not destroy....", data);
+    return data;
 };
 
 const filterVideos = (searchString) => {
 
     const removeElements = () => {
 
-        const elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
+        let elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
         console.log("[PRAKHAR]: [contentScript.js]: elements found....", elements);
+        if (elements.length === 0) {
+            elements = Array.from(document.querySelectorAll('ytd-compact-video-renderer'));
+            console.log("[PRAKHAR]: [contentScript.js]: elements changed....")
+        }
 
         const element1 = elements.find(el => el.textContent.includes(searchString));
+
+        // const elementArray = elements.filter((el) => {
+        //     return !searchString.some(title => el.textContent.includes(title));
+        // });
+
+        // if (elementArray.length !== 0) {
+        //     elementArray.forEach((el) => {
+        //         el.remove();
+        //     });
+        // }
+
         if (element1) {
             console.log("[PRAKHAR]: [contentScript.js]: matching video found....", element1);
 
-            const videoContainer = element1.closest('ytd-rich-item-renderer');
-            if (videoContainer) {
-                videoContainer.remove();
-                console.log("[PRAKHAR]: [contentScript.js]: videoContainer removed....");
-            }
+            element1.remove();
+            console.log("[PRAKHAR]: [contentScript.js]: element1 removed....");
         } else {
-            console.log("[PRAKHAR]: [contentScript.js]: no matching video found....");
+            console.log("[PRAKHAR]: [contentScript.js]: no element1 found....");
         }
     }
 
     removeElements();
-    const titleVector = scrapperTitleVector();
+    // const titleVector = scrapperTitleVector();
     console.log("[PRAKHAR]: [contentScript.js]: titleVector found....", titleVector);
 
     const observer = new MutationObserver(()=> {
         removeElements();
-        titleVector = scrapperTitleVector();
+        // titleVector = scrapperTitleVector();
         console.log("[PRAKHAR]: [contentScript.js]: titleVector found....", titleVector);
     })
 
