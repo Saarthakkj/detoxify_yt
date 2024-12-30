@@ -1,98 +1,79 @@
-#parsing the json response : sample_response.json
-import json
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List
+import torch
+import logging
+from transformers import BertTokenizer, BertForSequenceClassification
 
-title_keyword = []
-# Function to recursively iterate through a nested JSON object
-def iterate_nested_json(data_list , title_keyword): 
-    for data in data_list:
-        # print("hello world")
-        if isinstance(data, dict):  # Check if the data is a dictionary
-            title_keyword_pair = []
-            # print(data)
-            for key, value in data.items():
-                # print(key , value)
-                if key == "title":
-                    title_keyword_pair.append(value)
-                if key == "discovery_input":
-                    if isinstance(value  , dict):
-                        for key , value in value.items():
-                            if key == "keyword":
-                                title_keyword_pair.append(value)
-                                title_keyword.append(title_keyword_pair)
-                                # print(title_keyword_pair)
-                # print(f"Key: {key}")  # Print the key
-                # iterate_nested_json(value)  # Recursively call for the value
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# with open('sample_response.json', 'r') as file:
-#     json_data = json.load(file)  # Load the JSON data
-#     iterate_nested_json(json_data , title_keyword)  # Call the function to iterate through the JSON
+# Initialize FastAPI app
+app = FastAPI()
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# print(title_keyword)
+# Load model and tokenizer
+try:
+    model_path = "bert-yt_classifier/checkpoint-1460"
+    tokenizer = BertTokenizer.from_pretrained(model_path)
+    model = BertForSequenceClassification.from_pretrained(model_path)
+    model.eval()
+except Exception as e:
+    logger.error(f"Failed to load model: {e}")
+    raise
 
-# title_keyword_df = []
-# with open('main_response.json', 'r') as file:
-#     json_data = json.load(file)  # Load the JSON data
-#     iterate_nested_json(json_data , title_keyword_df)  # Call the function to iterate through the JSON
+class TextInput(BaseModel):
+    text: str
 
-# print(title_keyword_df)
+@app.post("/predict")
+async def predict(inputs: List[TextInput]):
+    try:
+        results = []
+        for input in inputs:
+            # Tokenize input text
+            encoded = tokenizer(
+                input.text,
+                padding=True,
+                truncation=True,
+                max_length=128,
+                return_tensors="pt"
+            )
+            
+            # Perform inference
+            with torch.no_grad():
+                output = model(**encoded)
+            
+            # Process outputs
+            probabilities = torch.nn.functional.softmax(output.logits, dim=-1)
+            predicted_class = torch.argmax(probabilities, dim=-1).item()
+            
+            label_mapping = {0: "other", 1: "chess", 2: "coding", 3: "math"}
+            predicted_label = label_mapping.get(predicted_class, "Unknown")
+            
+            results.append({
+                "input_text": input.text,
+                "predicted_label": predicted_label,
+                "confidence": float(probabilities[0][predicted_class])
+            })
+        
+        return results
+    except Exception as e:
+        logger.error(f"Prediction error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing request: {str(e)}"
+        )
 
-# Write the title-keyword pairs to a file
-# with open('title_keyword_pairs.csv', 'w', encoding='utf-8', newline='') as f:
-#     f.write("Title,Keyword\n")
-#     for pair in title_keyword:
-#         f.write(f"\"{pair[0]}\",{pair[1]}\n")
-    
-#     for pair in title_keyword_df:
-#         f.write(f"\"{pair[0]}\",{pair[1]}\n")
-
-
-# print('done')
-
-
-titles_and_keywords  = []
-with open('another_main.json', 'r') as file:
-    json_data = json.load(file)  # Load the JSON data
-    iterate_nested_json(json_data , titles_and_keywords)  # Call the function to iterate through the JSON
-
-with open('another_title_keyword_pairs.csv', 'w', encoding='utf-8', newline='') as f:
-    f.write("Title,Keyword\n")
-    for pair in titles_and_keywords:
-        f.write(f"\"{pair[0]}\",{pair[1]}\n")
-    
-    for pair in titles_and_keywords:
-        f.write(f"\"{pair[0]}\",{pair[1]}\n")
-
-print('done')
-
-
-
-#THIS IS THE MAIN DIV : <div id = "contents" class = "style-scope ytd-rich-grid-render"
-#sub divs that contain titles : 
-
-
-''' 
-
-all the HTML divs :
-
-div that contain the video card : <ytd-rich-item-renderer class="style-scope ytd-rich-grid-renderer" items-per-row="4" lockup="true" rendered-from-rich-grid is-in-first-column>
-
-<div id="dismissible" class="style-scope ytd-rich-grid-media">flex
-
-<div id="details" class="style-scope ytd-rich-grid-media">flex
-
-
-<div id="meta" class="style-scope ytd-rich-grid-media">
-
-<h3 class="style-scope ytd-rich-grid-media">
-
-
-<a id="video-title-link" class="yt-simple-endpoint focus-on-expand style-scope ytd-rich-grid-media" aria-label="Eric Maskin - An Introduction to Mechanism Design - Warwick Economics Summit 2014 by Warwick Economics Summit 17,458 views 10 years ago 1 hour, 4 minutes" title="Eric Maskin - An Introduction to Mechanism Design - Warwick Economics Summit 2014" href="/watch?v=XSVoeETsEcU&t=1525s">…</a>
-
-
-'''
-
-
-#dataset : https://www.kaggle.com/datasets/datasnaek/youtube-new?select=USvideos.csv
-#dataset2 : https://www.kaggle.com/datasets/rsrishav/youtube-trending-video-dataset?select=US_youtube_trending_data.csv
-    
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
