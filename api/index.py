@@ -17,9 +17,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Model loading
-tokenizer = BertTokenizer.from_pretrained('curlyoreki/detoxifying_yt')
-model = BertForSequenceClassification.from_pretrained('curlyoreki/detoxifying_yt')
+# Model loading with error handling
+try:
+    tokenizer = BertTokenizer.from_pretrained('curlyoreki/detoxifying_yt')
+    model = BertForSequenceClassification.from_pretrained('curlyoreki/detoxifying_yt')
+    model.eval()  # Set model to evaluation mode
+except Exception as e:
+    print(f"Error loading model: {e}")
+    raise
 
 label_mapping = {
     0: "other",
@@ -88,5 +93,11 @@ async def predict(inputs: List[TextInput]):
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 10000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    port = int(os.environ.get("PORT", 8000))  # Changed default port to 8000
+    uvicorn.run(
+        "api.index:app",
+        host="0.0.0.0",
+        port=port,
+        workers=1,
+        log_level="info"
+    )

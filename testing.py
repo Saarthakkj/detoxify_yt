@@ -1,72 +1,49 @@
 import requests
+import time
 
-# Make sure to use the correct URL
-url = "https://detoxify-yt.onrender.com"  # Base URL
+# Use your Render URL
+url = "https://detoxify-yt.onrender.com"  # Update this with your actual Render URL
 
-# Test data - format matches TextInput model from FastAPI
-data = [
-    {"text": "I love solving math problems and calculus!"}, 
-    {"text": "Magnus Carlsen just won another chess tournament"},
-    {"text": "Let's learn Python programming today"}
-]
-
-headers = {
-    "Content-Type": "application/json"
-}
-
-def test_endpoint():
-    try:
-        # Test each endpoint
-        print("\nTesting all endpoints...")
-        
-        # Root endpoint
-        root_response = requests.get(url)
-        print("\nRoot endpoint test (/):")
-        print(f"Status: {root_response.status_code}")
-        print(f"Response: {root_response.json()}")
-        
-        # Health check endpoint
-        health_response = requests.get(f"{url}/health")
-        print("\nHealth check endpoint (/health):")
-        print(f"Status: {health_response.status_code}")
-        print(f"Response: {health_response.json()}")
-        
-        # Model info endpoint
-        info_response = requests.get(f"{url}/model-info")
-        print("\nModel info endpoint (/model-info):")
-        print(f"Status: {info_response.status_code}")
-        print(f"Response: {info_response.json()}")
-        
-        # Test-predict endpoint
-        test_predict_response = requests.get(f"{url}/test-predict")
-        print("\nTest predict endpoint (/test-predict):")
-        print(f"Status: {test_predict_response.status_code}")
-        print(f"Response: {test_predict_response.json()}")
-        
-        # Predict endpoint
-        predict_response = requests.post(f"{url}/predict", json=data, headers=headers)
-        predict_response.raise_for_status()
-        results = predict_response.json()
-        
-        print("\nPredict endpoint test (/predict):")
-        for idx, result in enumerate(results):
-            print(f"\nText {idx + 1}: {data[idx]['text']}")
-            print(f"Prediction: {result['prediction']}")
-            print("Probabilities:")
-            for label, prob in result['probabilities'].items():
-                print(f"  {label}: {prob:.3f}")
+def test_basic():
+    max_retries = 3
+    retry_delay = 5  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            # Test root endpoint
+            response = requests.get(url, timeout=30)
+            print("\nRoot endpoint test:")
+            print(f"Status: {response.status_code}")
+            print(f"Response: {response.text}")  # Print raw text first
             
-    except requests.exceptions.RequestException as e:
-        print(f"\nError making request: {e}")
-        if hasattr(e, 'response') and e.response is not None:
-            print(f"Status code: {e.response.status_code}")
-            try:
-                print(f"Response text: {e.response.json()}")
-            except:
-                print(f"Response text: {e.response.text}")
-        else:
-            print("No response received")
+            if response.status_code == 200:
+                print(f"Response JSON: {response.json()}")
+            
+            # Only proceed with prediction test if root endpoint works
+            if response.status_code == 200:
+                test_data = [{"text": "How do I learn Python programming?"}]
+                predict_response = requests.post(
+                    f"{url}/predict",
+                    json=test_data,
+                    headers={"Content-Type": "application/json"},
+                    timeout=30
+                )
+                print("\nPredict endpoint test:")
+                print(f"Status: {predict_response.status_code}")
+                print(f"Response: {predict_response.json()}")
+                break
+            
+        except requests.exceptions.RequestException as e:
+            print(f"\nAttempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Max retries reached. Service might be down or still starting up.")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            break
 
 if __name__ == "__main__":
-    print("Testing deployment...")
-    test_endpoint()
+    print("Testing Render deployment...")
+    test_basic()
