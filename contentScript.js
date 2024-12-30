@@ -1,3 +1,5 @@
+const python = require("python-shell");
+
 console.log("[PRAKHAR]: [contentScript.js]: script started....");
 
 chrome.runtime.onMessage.addListener((message) => {
@@ -7,35 +9,38 @@ chrome.runtime.onMessage.addListener((message) => {
     }
 });
 
-const scrapperTitleVector = () => {
-    const elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
+const scrapperTitleVector = async () => {
+    const elements = Array.from(document.querySelectorAll('ytm-rich-item-renderer'));
     const titleVector = elements.map((el) => {
-        const titleElement = el.querySelector("h3 a[title]");
+        const titleElement = el.querySelector("h3 span");
         if (titleElement) {
-            return titleElement.title.trim();
+            return titleElement.textContent.trim();
         }
         return null;
     });
 
     const filteredArray = titleVector.filter((value) => value !== null);
+    // console.log("[PRAKHAR]: [contentScript.js]: filteredArray found....", filteredArray);
+    const response = await getTitlesAfterML(filteredArray);
+    // console.log("[PRAKHAR]: [contentScript.js]: response found thru ML....", response);
     return filteredArray;
 };
 
-const getTitlesAfterML = async (searchString) => {
-    const response = await fetch("http://localhost:8000/predict", {
-        method: "POST",
-        body: JSON.stringify({ searchString }),
+const getTitlesAfterML = async (array) => {
+    const reqbody = array.map((title) => {
+        return {
+            "text": title,
+        }
     });
-    const data = await response.json();
-    console.log("[PRAKHAR]: [contentScript.js]: data found to not destroy....", data);
-    return data;
+    const process = await python.run("testing.py", reqbody);
+    console.log("[PRAKHAR]: [contentScript.js]: process found....", process);
 };
 
-const filterVideos = (searchString) => {
+const filterVideos = async (searchString) => {
 
     const removeElements = () => {
 
-        let elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
+        let elements = Array.from(document.querySelectorAll('ytm-rich-item-renderer'));
         console.log("[PRAKHAR]: [contentScript.js]: elements found....", elements);
         if (elements.length === 0) {
             elements = Array.from(document.querySelectorAll('ytd-compact-video-renderer'));
@@ -65,12 +70,12 @@ const filterVideos = (searchString) => {
     }
 
     removeElements();
-    // const titleVector = scrapperTitleVector();
+    const titleVector = await scrapperTitleVector();
     console.log("[PRAKHAR]: [contentScript.js]: titleVector found....", titleVector);
 
-    const observer = new MutationObserver(()=> {
+    const observer = new MutationObserver(async () => {
         removeElements();
-        // titleVector = scrapperTitleVector();
+        titleVector = await scrapperTitleVector();
         console.log("[PRAKHAR]: [contentScript.js]: titleVector found....", titleVector);
     })
 
