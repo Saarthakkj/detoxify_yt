@@ -6,7 +6,9 @@ import torch
 import logging
 from transformers import BertTokenizer, BertForSequenceClassification
 import os
-from dotenv import load_dotenv
+
+
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -24,11 +26,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load environment variables
-load_dotenv()
+
 
 # Get the token from environment variables
-auth_token = os.getenv("HUGGING_FACE_TOKEN")
+auth_token = "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"
 
 # Use the token in your model loading
 model_path = "curlyoreki/detoxifying_yt"
@@ -81,3 +82,15 @@ async def predict(inputs: List[TextInput]):
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+@app.on_event("startup")
+async def startup_event():
+    global model, tokenizer
+    try:
+        tokenizer = BertTokenizer.from_pretrained(model_path, use_auth_token=auth_token)
+        model = BertForSequenceClassification.from_pretrained(model_path, use_auth_token=auth_token)
+        model.eval()
+        logger.info("Model loaded successfully")
+    except Exception as e:
+        logger.error(f"Error loading model: {e}")
+        raise RuntimeError("Failed to load the model")
