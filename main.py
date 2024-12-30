@@ -5,6 +5,8 @@ from typing import List
 import torch
 import logging
 from transformers import BertTokenizer, BertForSequenceClassification
+import os
+from dotenv import load_dotenv
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -22,15 +24,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load model and tokenizer
-try:
-    model_path = "bert-yt_classifier/checkpoint-1460"
-    tokenizer = BertTokenizer.from_pretrained(model_path)
-    model = BertForSequenceClassification.from_pretrained(model_path)
-    model.eval()
-except Exception as e:
-    logger.error(f"Failed to load model: {e}")
-    raise
+# Load environment variables
+load_dotenv()
+
+# Get the token from environment variables
+auth_token = os.getenv("HUGGING_FACE_TOKEN")
+
+# Use the token in your model loading
+model_path = "curlyoreki/detoxifying_yt"
+tokenizer = BertTokenizer.from_pretrained(model_path, use_auth_token=auth_token)
+model = BertForSequenceClassification.from_pretrained(model_path, use_auth_token=auth_token)
+model.eval()
 
 class TextInput(BaseModel):
     text: str
