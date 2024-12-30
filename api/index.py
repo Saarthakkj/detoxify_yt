@@ -31,7 +31,7 @@ class TextInput(BaseModel):
     text: str
 
 @app.get("/")
-async def root():
+def root():
     return {"status": "ok", "message": "Detoxify API is running"}
 
 @app.get("/health")
@@ -83,3 +83,7 @@ async def predict(inputs: List[TextInput]):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

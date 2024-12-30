@@ -2,4 +2,5 @@ fastapi
 pydantic
 torch
 transformers
+uvicorn
 python-multipart

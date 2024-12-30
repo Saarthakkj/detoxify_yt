@@ -1,71 +1,48 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
+# Ignore everything by default
+*
 
-# Virtual Environment
-venv/
-ENV/
-.env
-virtual/
+# Then explicitly allow only the necessary files
+!api/index.py
+!requirements.txt
+!vercel.json
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# Ignore all Python cache files anywhere
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
 
-# Jupyter Notebook
-.ipynb_checkpoints/
-*.ipynb
+# Explicitly ignore large directories and files
 bert-yt_classifier/
-title_keyword_pairs.csv
-title_keyword_pairs.txt
+model/
+models/
+*.pt
+*.pth
+*.bin
+*.h5
+*.onnx
+*.pkl
+*.joblib
 
-# Data files
-*.csv
-*.zip
-*.json
-sample_response.json
-main_response.json
-USvideos.csv*
-US_youtube_trending_data.csv*
-filtered_data.csv
-filtered_data1.csv
-
-# Git related
+# Ignore development files
 .git/
 .gitignore
-.gitattributes
-.vercel
+.env
+.venv/
+venv/
+ENV/
+env/
+*.ipynb
+.ipynb_checkpoints/
+testing.py
+test_*.py
+*.log
 
-# Keep essential files
-!vercel.json
-!api/vercel.json
-!package.json
-!requirements.txt
-
-# Docker related
-.dockerignore
-Dockerfile
-
-# Documentation
-README.md 
-virtual/
+# Ignore all data files
+*.csv
+*.json
+*.zip
+*.gz
+*.tar
+*.7z
+*.rar

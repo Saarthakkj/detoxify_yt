@@ -1,13 +1,13 @@
 import requests
 
-# Replace with your Vercel deployment URL (without trailing slash)
-url = "https://detoxify-yt.vercel.app"  # Remove trailing slash
+# Make sure to use the correct URL
+url = "https://detoxify-yt.vercel.app"  # Base URL
 
-# Test data
+# Test data - format matches TextInput model from FastAPI
 data = [
     {"text": "I love solving math problems and calculus!"}, 
     {"text": "Magnus Carlsen just won another chess tournament"},
-    {"text": "Let's learn Python programming today"},
+    {"text": "Let's learn Python programming today"}
 ]
 
 headers = {
@@ -16,18 +16,39 @@ headers = {
 
 def test_endpoint():
     try:
-        # First test the root endpoint
+        # Test each endpoint
+        print("\nTesting all endpoints...")
+        
+        # Root endpoint
         root_response = requests.get(url)
-        print(f"\nRoot endpoint test:")
+        print("\nRoot endpoint test (/):")
         print(f"Status: {root_response.status_code}")
         print(f"Response: {root_response.json()}")
-
-        # Then test the predict endpoint
+        
+        # Health check endpoint
+        health_response = requests.get(f"{url}/health")
+        print("\nHealth check endpoint (/health):")
+        print(f"Status: {health_response.status_code}")
+        print(f"Response: {health_response.json()}")
+        
+        # Model info endpoint
+        info_response = requests.get(f"{url}/model-info")
+        print("\nModel info endpoint (/model-info):")
+        print(f"Status: {info_response.status_code}")
+        print(f"Response: {info_response.json()}")
+        
+        # Test-predict endpoint
+        test_predict_response = requests.get(f"{url}/test-predict")
+        print("\nTest predict endpoint (/test-predict):")
+        print(f"Status: {test_predict_response.status_code}")
+        print(f"Response: {test_predict_response.json()}")
+        
+        # Predict endpoint
         predict_response = requests.post(f"{url}/predict", json=data, headers=headers)
         predict_response.raise_for_status()
         results = predict_response.json()
         
-        print("\nPredict endpoint test:")
+        print("\nPredict endpoint test (/predict):")
         for idx, result in enumerate(results):
             print(f"\nText {idx + 1}: {data[idx]['text']}")
             print(f"Prediction: {result['prediction']}")
