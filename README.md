@@ -2,71 +2,140 @@
 
 ![Detoxify Logo](Detoxify.png)
 
-> Smart Content. Clear Categories.
+> Smart Content. Clear Categories. Better YouTube Feed.
 
-Detoxify is an AI-powered content classification system that helps identify and categorize YouTube content using state-of-the-art BERT models. Built with accuracy and scalability in mind, it currently classifies content into chess, coding, mathematics, and other categories.
+Detoxify is an AI-powered Chrome extension and content classification system that declutters your YouTube feed by intelligently categorizing videos into Chess, Coding, Mathematics, and other categories using state-of-the-art BERT models.
+
+## 🎯 Overview
+
+Detoxify is a complete ecosystem that combines:
+- Chrome Extension for user interaction
+- FastAPI backend for processing
+- BERT model for classification
+- BrightData API for real-time scraping
+
+## 🏗️ System Architecture
+
+### 1. Chrome Extension (Frontend)
+- User interface for category selection
+- Real-time content scraping initiation
+- Dynamic video filtering based on classifications
+- Seamless integration with YouTube's interface
+
+### 2. FastAPI Backend
+- High-performance API endpoints
+- Asynchronous processing
+- Token-based authentication
+- Real-time data handling
+
+### 3. BERT Classification Model
+- Fine-tuned on YouTube content
+- Multi-category classification
+- Real-time inference capabilities
+
+### 4. BrightData Integration
+- Real-time YouTube metadata scraping
+- Efficient data collection
+- Structured data processing
 
 ## 🚀 Features
 
-- **Intelligent Classification**: Powered by fine-tuned BERT models
-- **High Accuracy**: Achieves 87.8% accuracy on test data
-- **REST API**: Easy-to-use FastAPI endpoints
-- **Token-based Authentication**: Secure API access
-- **Real-time Processing**: Quick classification response
-- **Scalable Architecture**: Built for high-volume processing
+- **Intelligent Classification**: BERT-powered content categorization
+- **High Accuracy**: 87.8% classification accuracy
+- **Real-time Processing**: Instant content filtering
+- **Secure Access**: Token-based authentication
+- **Scalable Architecture**: Handles high-volume processing
+- **User-Defined Categories**: Chess, Coding, Mathematics
 
 ## 📊 Performance Metrics
 
-- Accuracy: 87.8%
-- ROC-AUC Scores:
-  - Chess: 0.976
-  - Coding: 0.971
-  - Mathematics: 0.949
-  - Other: 0.941
+### Model Performance
+- Overall Accuracy: 87.8%
 
-## 🧪 Model Training
+### ROC-AUC Scores
+- Chess: 0.976
+- Coding: 0.971
+- Mathematics: 0.949
+- Other: 0.941
 
-The model was trained on a curated dataset of YouTube content with:
-- 10 epochs
-- Learning rate: 2e-5
-- Batch size: 16
-- BERT base architecture
+## 🛠️ Technical Implementation
 
-## 📦 Dependencies
+### Model Training Configuration
+python
+training_args = TrainingArguments(
+learning_rate=2e-5,
+per_device_train_batch_size=16,
+num_train_epochs=10,
+warmup_ratio=0.1,
+weight_decay=0.01
+)
 
+### System Requirements
 - Python 3.8+
-- FastAPI
-- PyTorch
-- Transformers
-- Pandas
-- NumPy
+- Chrome Browser (latest version)
+- Internet connection for API access
+
+### Core Dependencies
+fastapi>=0.104.1
+torch>=2.0.0
+transformers>=4.30.0
+pydantic>=2.0.0
+uvicorn>=0.23.2
+
+## 🔄 Workflow
+
+1. **User Interaction**
+   - Install Chrome extension
+   - Select content category
+   - Trigger real-time filtering
+
+2. **Data Processing**
+   - BrightData API scrapes YouTube metadata
+   - Backend processes incoming data
+   - BERT model classifies content
+
+3. **Content Filtering**
+   - Relevant videos are displayed
+   - Non-matching content is hidden
+   - Real-time feed updates
+
+## 🔒 Security
+
+- Token-based API authentication
+- Secure data transmission
+- Protected model endpoints
+
+## 🔮 Future Enhancements
+
+- Additional content categories
+- Multilingual support
+- Personalized recommendations
+- Enhanced scraping capabilities
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Create feature branch (`git checkout -b feature/Enhancement`)
+3. Commit changes (`git commit -m 'Add Enhancement'`)
+4. Push to branch (`git push origin feature/Enhancement`)
+5. Open Pull Request
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
 
 ## 🙏 Acknowledgments
 
-- BrightData API for the scraping youtube content
-- FastAPI team for the excellent web framework
+- BrightData API for YouTube content scraping
+- FastAPI team for the web framework
+- Hugging Face for transformer models
 
 ## 📧 Contact
 
-Your Name - [@curlydazai](https://x.com/curlydazai) - saarthaksaxena7@gmail.com
-
-
-Project Link: [https://github.com/Saarthakkj/detoxify_yt](https://github.com/Saarthakkj/detoxify_yt)
+Saarthak Saxena
+- Twitter: [@curlydazai](https://x.com/curlydazai)
+- Email: saarthaksaxena7@gmail.com
+- Project: [GitHub Repository](https://github.com/Saarthakkj/detoxify_yt)
 
 ---
-<p align="center">Made with ❤️ for making your youtube feed better</p>
-
+<p align="center">Made with ❤️ for a cleaner YouTube experience</p>

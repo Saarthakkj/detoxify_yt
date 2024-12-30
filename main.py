@@ -7,9 +7,6 @@ import logging
 from transformers import BertTokenizer, BertForSequenceClassification
 import os
 
-
-
-
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
