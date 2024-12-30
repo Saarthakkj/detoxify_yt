@@ -1,7 +1,7 @@
 import requests
 
 # Make sure to use the correct URL
-url = "https://detoxify-yt.vercel.app"  # Base URL
+url = "https://detoxify-yt.onrender.com"  # Base URL
 
 # Test data - format matches TextInput model from FastAPI
 data = [

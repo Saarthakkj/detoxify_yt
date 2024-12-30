@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
+import os
 
 app = FastAPI()
 
@@ -30,8 +31,9 @@ label_mapping = {
 class TextInput(BaseModel):
     text: str
 
+@app.head("/")
 @app.get("/")
-def root():
+async def root():
     return {"status": "ok", "message": "Detoxify API is running"}
 
 @app.get("/health")
@@ -86,4 +88,5 @@ async def predict(inputs: List[TextInput]):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
