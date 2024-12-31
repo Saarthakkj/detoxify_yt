@@ -1,4 +1,3 @@
-const python = require("python-shell");
 
 console.log("[PRAKHAR]: [contentScript.js]: script started....");
 
@@ -10,7 +9,7 @@ chrome.runtime.onMessage.addListener((message) => {
 });
 
 const scrapperTitleVector = async () => {
-    const elements = Array.from(document.querySelectorAll('ytm-rich-item-renderer'));
+    const elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
     const titleVector = elements.map((el) => {
         const titleElement = el.querySelector("h3 span");
         if (titleElement) {
@@ -21,26 +20,26 @@ const scrapperTitleVector = async () => {
 
     const filteredArray = titleVector.filter((value) => value !== null);
     // console.log("[PRAKHAR]: [contentScript.js]: filteredArray found....", filteredArray);
-    const response = await getTitlesAfterML(filteredArray);
+    // const response = await getTitlesAfterML(filteredArray);
     // console.log("[PRAKHAR]: [contentScript.js]: response found thru ML....", response);
     return filteredArray;
 };
 
-const getTitlesAfterML = async (array) => {
-    const reqbody = array.map((title) => {
-        return {
-            "text": title,
-        }
-    });
-    const process = await python.run("testing.py", reqbody);
-    console.log("[PRAKHAR]: [contentScript.js]: process found....", process);
-};
+// const getTitlesAfterML = async (array) => {
+//     const reqbody = array.map((title) => {
+//         return {
+//             "text": title,
+//         }
+//     });
+//     const process = await python.run("testing.py", reqbody);
+//     console.log("[PRAKHAR]: [contentScript.js]: process found....", process);
+// };
 
 const filterVideos = async (searchString) => {
 
     const removeElements = () => {
 
-        let elements = Array.from(document.querySelectorAll('ytm-rich-item-renderer'));
+        let elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
         console.log("[PRAKHAR]: [contentScript.js]: elements found....", elements);
         if (elements.length === 0) {
             elements = Array.from(document.querySelectorAll('ytd-compact-video-renderer'));

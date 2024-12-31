@@ -57,3 +57,4 @@ title_keyword_pairs.txt
 # Environment variables
 .env
 .env.*
+last_response.json

@@ -13,8 +13,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         console.log("[PRAKHAR]: [popup.js]: searchString....", searchString);
 
+        // Query for the currently active tab in the current window
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, {action: "filter", searchString: searchString});
+            // First check if we can inject the content script
+            chrome.scripting.executeScript({
+                target: { tabId: tabs[0].id },
+                files: ['contentScript.js']
+            }, () => {
+                // After content script is injected, send the message
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: "filter", 
+                    searchString: searchString
+                });
+                console.log("[PRAKHAR]: [popup.js]: content script injected and message sent....");
+            });
         });
     });
 });
