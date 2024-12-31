@@ -11,6 +11,7 @@ function runPythonScript(scriptPath, args, callback) {
     pythonProcess.stdout.on('data', (chunk) => {
         data += chunk.toString(); // Collect data from Python script
     });
+    console.log("[PRAKHAR]: [contentScript.js]: data found....", data);
  
     pythonProcess.stderr.on('data', (error) => {
         console.error(`stderr: ${error}`);
