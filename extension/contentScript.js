@@ -1,87 +1,84 @@
-
 console.log("[PRAKHAR]: [contentScript.js]: script started....");
 
+// Listen for messages from the popup.js
 chrome.runtime.onMessage.addListener((message) => {
     if (message.action === "filter") {
-        const searchString = message.searchString;
-        filterVideos(searchString);
+        const searchString = message.searchString; // Get the search string from the message
+        filterVideos(searchString); // Call the filter function with the search string
     }
 });
 
+// Function to scrape video titles from the page
 const scrapperTitleVector = async () => {
-    const elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
+    const elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer')); // Select video elements
     const titleVector = elements.map((el) => {
-        const titleElement = el.querySelector("h3 span");
+        // console.log("[PRAKHAR]: [contentScript.js]: el found....", el);
+        const titleElement = el.querySelector("#video-title"); // Find the title element
+        // console.log("contentScript.js]: titleElement found....", titleElement);
         if (titleElement) {
-            return titleElement.textContent.trim();
+            return titleElement.textContent.trim(); // Return trimmed title text
         }
-        return null;
+        return null; // Return null if no title found
     });
+    // console.log("[PRAKHAR]: [contentScript.js]: titleVector found....", titleVector);
 
-    const filteredArray = titleVector.filter((value) => value !== null);
+    const filteredArray = titleVector.filter((value) => value !== null); // Filter out null values
     // console.log("[PRAKHAR]: [contentScript.js]: filteredArray found....", filteredArray);
-    // const response = await getTitlesAfterML(filteredArray);
-    // console.log("[PRAKHAR]: [contentScript.js]: response found thru ML....", response);
-    return filteredArray;
+    return filteredArray; // Return the array of titles
 };
 
-// const getTitlesAfterML = async (array) => {
-//     const reqbody = array.map((title) => {
-//         return {
-//             "text": title,
-//         }
-//     });
-//     const process = await python.run("testing.py", reqbody);
-//     console.log("[PRAKHAR]: [contentScript.js]: process found....", process);
-// };
-
+// Function to filter videos based on the search string
 const filterVideos = async (searchString) => {
 
     const removeElements = () => {
-
-        let elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
-        console.log("[PRAKHAR]: [contentScript.js]: elements found....", elements);
+        let elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer')); // Get video elements
+        // console.log("[PRAKHAR]: [contentScript.js]: elements found....", elements);
+        // console.log();
         if (elements.length === 0) {
-            elements = Array.from(document.querySelectorAll('ytd-compact-video-renderer'));
-            console.log("[PRAKHAR]: [contentScript.js]: elements changed....")
+            elements = Array.from(document.querySelectorAll('ytd-compact-video-renderer')); // Fallback to compact video elements
+            // console.log("[PRAKHAR]: [contentScript.js]: elements changed....")
         }
+        
+        //elements -> array of youtube titles in realtime scraping
 
-        const element1 = elements.find(el => el.textContent.includes(searchString));
+        //this below code successfully scrapes the titles from elements array
+        // const t = scrapperTitleVector(elements);
+        // console.log("[PRAKHAR]: [contentScript.js]: t found....", t);
 
-        // const elementArray = elements.filter((el) => {
-        //     return !searchString.some(title => el.textContent.includes(title));
-        // });
 
-        // if (elementArray.length !== 0) {
-        //     elementArray.forEach((el) => {
-        //         el.remove();
-        //     });
+        //this removes the keyword from the vidos: 
+        
+
+        // if (element1) {
+        //     console.log("[PRAKHAR]: [contentScript.js]: matching video found....", element1);
+        //     element1.remove(); // Remove the matching element
+        //     console.log("[PRAKHAR]: [contentScript.js]: element1 removed....");
+        // } else {
+        //     console.log("[PRAKHAR]: [contentScript.js]: no element1 found....");
         // }
-
-        if (element1) {
-            console.log("[PRAKHAR]: [contentScript.js]: matching video found....", element1);
-
-            element1.remove();
-            console.log("[PRAKHAR]: [contentScript.js]: element1 removed....");
-        } else {
-            console.log("[PRAKHAR]: [contentScript.js]: no element1 found....");
-        }
     }
 
-    removeElements();
-    const titleVector = await scrapperTitleVector();
-    console.log("[PRAKHAR]: [contentScript.js]: titleVector found....", titleVector);
+    removeElements(); // Initial call to remove elements
+    const titleVector = await scrapperTitleVector(); // Get the titles after filtering
+    console.log("[contentScript.js]: titleVector found....", titleVector);
 
-    const observer = new MutationObserver(async () => {
-        removeElements();
-        titleVector = await scrapperTitleVector();
-        console.log("[PRAKHAR]: [contentScript.js]: titleVector found....", titleVector);
-    })
 
-    const targetNode = document.body;
-    const config = { childList: true, subtree: true };
-    observer.observe(targetNode, config);
+    
 
+
+    //todo : understand below code
+    // Set up a MutationObserver to watch for changes in the DOM
+    // const observer = new MutationObserver(async () => {
+    //     removeElements(); // Call to remove elements on mutation
+    //     titleVector = await scrapperTitleVector(); // Update title vector
+    //     console.log("[PRAKHAR]: [contentScript.js]: titleVector found....", titleVector);
+    // })
+
+    // const targetNode = document.body; // Target the body for observing changes
+    // const config = { childList: true, subtree: true }; // Configuration for the observer
+    // observer.observe(targetNode, config); // Start observing
+
+    // Disconnect the observer after 10 seconds
     setTimeout(() => {
         observer.disconnect();
         console.log("[PRAKHAR]: [contentScript.js]: observer disconnected....");
