@@ -1,3 +1,32 @@
+const express = require('express');
+const { spawn } = require('child_process');
+ 
+const app = express();
+const port = 3000;
+
+function runPythonScript(scriptPath, args, callback) {
+    const pythonProcess = spawn('python', [scriptPath].concat(args));
+ 
+    let data = '';
+    pythonProcess.stdout.on('data', (chunk) => {
+        data += chunk.toString(); // Collect data from Python script
+    });
+ 
+    pythonProcess.stderr.on('data', (error) => {
+        console.error(`stderr: ${error}`);
+    });
+ 
+    pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+            console.log(`Python script exited with code ${code}`);
+            callback(`Error: Script exited with code ${code}`, null);
+        } else {
+            console.log('Python script executed successfully');
+            callback(null, data);
+        }
+    });
+}
+
 console.log("[PRAKHAR]: [contentScript.js]: script started....");
 
 // Listen for messages from the popup.js
@@ -47,7 +76,7 @@ const filterVideos = async (searchString) => {
 
 
         //this removes the keyword from the vidos: 
-        
+
 
         // if (element1) {
         //     console.log("[PRAKHAR]: [contentScript.js]: matching video found....", element1);
@@ -61,7 +90,13 @@ const filterVideos = async (searchString) => {
     removeElements(); // Initial call to remove elements
     const titleVector = await scrapperTitleVector(); // Get the titles after filtering
     console.log("[contentScript.js]: titleVector found....", titleVector);
-
+    runPythonScript("python/testing.py", [titleVector], (error, result) => {
+        if (error) {
+            console.error(`Error: ${error}`);
+        } else {
+            console.log(`Result: ${result}`);
+        }
+    });
 
     
 
