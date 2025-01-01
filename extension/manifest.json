@@ -15,7 +15,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["popup.css", "popup.js"],
+      "resources": ["popup.css", "popup.js", "cross.png"],
       "matches": ["https://*.youtube.com/*"]
     }
   ],

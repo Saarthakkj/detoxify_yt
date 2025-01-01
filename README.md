@@ -1,6 +1,6 @@
 # Detoxify
 
-![Detoxify Logo](Detoxify.png)
+![Detoxify Logo](cover.png)
 
 > Smart Content. Clear Categories. Better YouTube Feed.
 

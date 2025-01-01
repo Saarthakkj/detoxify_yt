@@ -8,10 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("[PRAKHAR]: [popup.js]: button clicked....");
 
         // Grab the search input field by its ID
-        const searchInput = document.getElementById("searchInput");
-        const searchString = searchInput.value;
+        // const searchInput = document.getElementById("searchInput");
+        // const searchString = searchInput.value;
+        const category = document.querySelector('input[name="category"]:checked').value;
 
-        console.log("[PRAKHAR]: [popup.js]: searchString....", searchString);
+        console.log("[PRAKHAR]: [popup.js]: category....", category);
 
         // Query for the currently active tab in the current window
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -23,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // After content script is injected, send the message
                 chrome.tabs.sendMessage(tabs[0].id, {
                     action: "filter", 
-                    searchString: searchString
+                    searchString: category
                 });
                 console.log("[PRAKHAR]: [popup.js]: content script injected and message sent....");
             });
