@@ -1,8 +1,0 @@
-usage: accelerate <command> [<args>]
-
-positional arguments:
-  {config,estimate-memory,env,launch,merge-weights,tpu-config,test}
-                        accelerate command helpers
-
-options:
-  -h, --help            show this help message and exit
