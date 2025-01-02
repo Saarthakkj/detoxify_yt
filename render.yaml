@@ -7,5 +7,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.0 
-        
-      - fromGroup : apikey
+      - key: HUGGING_FACE_TOKEN
+        sync: false
