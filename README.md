@@ -12,15 +12,13 @@ Detoxify is a complete ecosystem that combines:
 - Chrome Extension for user interaction
 - FastAPI backend for processing
 - BERT model for classification
-- BrightData API for real-time scraping
+- BrightData API for dataset generation
 
 ## 🏗️ System Architecture
 
 ### 1. Chrome Extension (Frontend)
-- User interface for category selection
 - Real-time content scraping initiation
 - Dynamic video filtering based on classifications
-- Seamless integration with YouTube's interface
 
 ### 2. FastAPI Backend
 - High-performance API endpoints
@@ -33,19 +31,16 @@ Detoxify is a complete ecosystem that combines:
 - Multi-category classification
 - Real-time inference capabilities
 
-### 4. BrightData Integration
-- Real-time YouTube metadata scraping
+### 4. BrightData Scraping API
 - Efficient data collection
-- Structured data processing
+- High Quality Dataset-generation
 
 ## 🚀 Features
 
 - **Intelligent Classification**: BERT-powered content categorization
 - **High Accuracy**: 87.8% classification accuracy
-- **Real-time Processing**: Instant content filtering
-- **Secure Access**: Token-based authentication
-- **Scalable Architecture**: Handles high-volume processing
-- **User-Defined Categories**: Chess, Coding, Mathematics
+- **Processing**: Content filtering
+- **Three Categories**: Chess, Coding, Mathematics
 
 ## 📊 Performance Metrics
 
@@ -76,28 +71,27 @@ weight_decay=0.01
 - Internet connection for API access
 
 ### Core Dependencies
-fastapi>=0.104.1
-torch>=2.0.0
-transformers>=4.30.0
+fastapi==0.104.1
+uvicorn==0.23.2
 pydantic>=2.0.0
-uvicorn>=0.23.2
+transformers>=4.30.0
+torch>=2.0.0
+python-dotenv==1.0.1
+requests>=2.31.0
 
 ## 🔄 Workflow
 
 1. **User Interaction**
    - Install Chrome extension
    - Select content category
-   - Trigger real-time filtering
 
 2. **Data Processing**
-   - BrightData API scrapes YouTube metadata
    - Backend processes incoming data
    - BERT model classifies content
 
 3. **Content Filtering**
    - Relevant videos are displayed
    - Non-matching content is hidden
-   - Real-time feed updates
 
 ## 🔒 Security
 
@@ -107,10 +101,9 @@ uvicorn>=0.23.2
 
 ## 🔮 Future Enhancements
 
+- Implementing faster models
+- Better UI/UX for extension
 - Additional content categories
-- Multilingual support
-- Personalized recommendations
-- Enhanced scraping capabilities
 
 ## 🤝 Contributing
 
@@ -129,13 +122,19 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
 - BrightData API for YouTube content scraping
 - FastAPI team for the web framework
 - Hugging Face for transformer models
+- Render for deploying
 
 ## 📧 Contact
+
+Prakhar Agrawal 
+- Email : prakhar20585@gmail.com
 
 Saarthak Saxena
 - Twitter: [@curlydazai](https://x.com/curlydazai)
 - Email: saarthaksaxena7@gmail.com
-- Project: [GitHub Repository](https://github.com/Saarthakkj/detoxify_yt)
+
+
+Project: [GitHub Repository](https://github.com/Saarthakkj/detoxify_yt)
 
 ---
 <p align="center">Made with ❤️ for a cleaner YouTube experience</p>
