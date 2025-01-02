@@ -6,14 +6,14 @@ import torch
 import logging
 from transformers import BertTokenizer, BertForSequenceClassification
 import os
-# from dotenv import *
-
-# load_dotenv()
-
+from dotenv import load_dotenv
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Load environment variables
+load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -27,16 +27,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-
-# Get the token from environment variables
+# Get the token from environment variables with a default value
 auth_token = os.environ['HUGGING_FACE_TOKEN']
+if not auth_token:
+    logger.error("HUGGING_FACE_TOKEN not found in environment variables")
+    raise RuntimeError("HUGGING_FACE_TOKEN environment variable is required")
 
-# Use the token in your model loading
-model_path = "curlyoreki/detoxifying_yt"
-tokenizer = BertTokenizer.from_pretrained(model_path, token=auth_token)
-model = BertForSequenceClassification.from_pretrained(model_path, token=auth_token)
-model.eval()
+# Initialize model and tokenizer at startup instead of module level
+model = None
+tokenizer = None
 
 class TextInput(BaseModel):
     text: str
@@ -88,10 +87,11 @@ async def health_check():
 async def startup_event():
     global model, tokenizer
     try:
+        model_path = "curlyoreki/detoxifying_yt"
         tokenizer = BertTokenizer.from_pretrained(model_path, token=auth_token)
         model = BertForSequenceClassification.from_pretrained(model_path, token=auth_token)
         model.eval()
         logger.info("Model loaded successfully")
     except Exception as e:
         logger.error(f"Error loading model: {e}")
-        raise RuntimeError("Failed to load the model")
+        raise RuntimeError(f"Failed to load the model: {str(e)}")

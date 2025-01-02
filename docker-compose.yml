@@ -4,8 +4,8 @@ services:
     build: .
     ports:
       - "8000:8000"
-    environment:
-      - HUGGING_FACE_TOKEN=${HUGGING_FACE_TOKEN}
+    env_file:
+      - local.env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
