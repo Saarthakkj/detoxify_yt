@@ -28,7 +28,7 @@ app.add_middleware(
 )
 
 # Get the token from environment variables with a default value
-auth_token = os.environ['HUGGING_FACE_TOKEN']
+auth_token = os.environ.get('HUGGING_FACE_TOKEN')
 if not auth_token:
     logger.error("HUGGING_FACE_TOKEN not found in environment variables")
     raise RuntimeError("HUGGING_FACE_TOKEN environment variable is required")
