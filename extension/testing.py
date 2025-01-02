@@ -7,9 +7,7 @@ url = "https://detoxify-yt.onrender.com/predict"
 # Multiple titles to test
 data = [
     {"text": "I love solving math problems!"},
-    {"text": "Magnus Carlsen's brilliant chess strategy"},
-    {"text": "Learn Python programming basics"},
-    {"text": "Differential equations made easy"}
+    {"text": "Magnus Carlsen's brilliant chess strategy"}
 ]
     
 

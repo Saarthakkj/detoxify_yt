@@ -3,3 +3,6 @@ uvicorn==0.23.2
 pydantic>=2.0.0
 transformers>=4.30.0
 torch>=2.0.0
+python-dotenv==1.0.1
+requests>=2.31.0
+# Add your other dependencies here

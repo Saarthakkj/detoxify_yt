@@ -65,6 +65,15 @@ const filterVideos = async (searchString) => {
     let thumbnails = Array.from(document.querySelectorAll('ytd-thumbnail img'));
     console.log("[PRAKHAR]: [contentScript.js]: elements found....", elements[1].querySelector("#video-title"));
     console.log("[PRAKHAR]: [contentScript.js]: thumbnails found....", thumbnails[1].src);
+
+
+
+    // console.log("changing first video's thumbnail "  );
+    // thumbnails[1].src = chrome.runtime.getURL('cross.png');
+    // elements[1].querySelector("#video-title").innerHTML = 'not allowed to watch';
+
+   
+    
     if (elements.length === 0) {
         elements = Array.from(document.querySelectorAll('ytd-compact-video-renderer'));
     }
@@ -73,29 +82,38 @@ const filterVideos = async (searchString) => {
         let titleVector = await scrapperTitleVector(elements);
         console.log("[contentScript.js]: titleVector found....", titleVector);
         
-        let t_vector = titleVector.map((title) => ({ text: title }));
-        console.log("api request sent....");
+        let t_vector = titleVector.map((title) => ({ "text" : title }));
+        console.log("api request sent...." , t_vector);
+
+        // let temp_t_vector = t_vector.slice(0 , 6);
         let t_dash_vector = await sendPostRequest('https://detoxify-yt.onrender.com/predict', t_vector);
-        console.log("[PRAKHAR]: [contentScript.js]: api response received....", t_dash_vector);
+        console.log("t dash vector from two elements : " , t_dash_vector);
         
-        if (t_dash_vector) {
+        // let t_dash_vector = await sendPostRequest('https://detoxify-yt.onrender.com/predict', t_vector);
+        // console.log("[PRAKHAR]: [contentScript.js]: api response received....", t_dash_vector);
+        
+        if(t_dash_vector) {
             for(let i = 0; i < t_dash_vector.length; i++) {
+                console.log("t_dash_vector[i] : " , t_dash_vector[i]);
                 if(t_dash_vector[i].predicted_label !== searchString) {
-                    if (elements[i] && elements[i].isConnected) {
-                        try {
-                            console.log(`Hiding video with label: ${t_dash_vector[i].predicted_label}`);
-                            if (thumbnails[i]) {
-                                thumbnails[i].src = chrome.runtime.getURL('cross.png');
-                                elements[i].style.opacity = '0.5'; // Optional: dim the whole card
-                            }
-                            let titleElement = elements[i].querySelector("#video-title");
-                            if (titleElement) {
-                                titleElement.innerHTML = ''; // Clear only the title
-                            }
-                        } catch (error) {
-                            console.error('Error modifying element:', error);
-                        }
-                    }
+                    console.log("t_dash_vector[i] where label is different : " , t_dash_vector[i] ,"this is the elements array : " ,  elements[i]);
+                    // elements[i].innerHTML = '';
+                    thumbnails[i].src = chrome.runtime.getURL('cross.png');
+                    elements[i].querySelector("#video-title").innerHTML = 'not allowed to watch';
+                    // if (elements[i] && elements[i].isConnected) {
+                    //     console.log("elemt to be reomved : " , elements[i]);
+                    //     try {
+                    //         // console.log(`Hiding video with label: ${t_dash_vector[i].predicted_label}`);
+                    //         // if (thumbnails[i]) {
+                    //         //     thumbnails[i].src = chrome.runtime.getURL('cross.png');
+                    //         //     // elements[i].style.opacity = '0.5'; // Optional: dim the whole card
+                    //         // }
+                    //         // let titleElement = elements[i].querySelector("#video-title");
+                    //         elements[i].innerHTML = '';
+                    //     } catch (error) {
+                    //         console.error('Error modifying element:', error);
+                    //     }
+                    // }
                 }
             }
         }

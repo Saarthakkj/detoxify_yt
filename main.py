@@ -6,6 +6,10 @@ import torch
 import logging
 from transformers import BertTokenizer, BertForSequenceClassification
 import os
+# from dotenv import *
+
+# load_dotenv()
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -26,12 +30,12 @@ app.add_middleware(
 
 
 # Get the token from environment variables
-auth_token = "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"
+auth_token = os.environ['HUGGING_FACE_TOKEN']
 
 # Use the token in your model loading
 model_path = "curlyoreki/detoxifying_yt"
-tokenizer = BertTokenizer.from_pretrained(model_path, use_auth_token=auth_token)
-model = BertForSequenceClassification.from_pretrained(model_path, use_auth_token=auth_token)
+tokenizer = BertTokenizer.from_pretrained(model_path, token=auth_token)
+model = BertForSequenceClassification.from_pretrained(model_path, token=auth_token)
 model.eval()
 
 class TextInput(BaseModel):
@@ -84,8 +88,8 @@ async def health_check():
 async def startup_event():
     global model, tokenizer
     try:
-        tokenizer = BertTokenizer.from_pretrained(model_path, use_auth_token=auth_token)
-        model = BertForSequenceClassification.from_pretrained(model_path, use_auth_token=auth_token)
+        tokenizer = BertTokenizer.from_pretrained(model_path, token=auth_token)
+        model = BertForSequenceClassification.from_pretrained(model_path, token=auth_token)
         model.eval()
         logger.info("Model loaded successfully")
     except Exception as e:
