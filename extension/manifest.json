@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Filtering YT videos",
   "permissions": ["storage", "tabs", "scripting", "activeTab"],
-  "host_permissions": ["https://*.youtube.com/*"],
+  "host_permissions": ["https://*.youtube.com/*" , "https://detoxify-yt.onrender.com/*"],
   "background": {
     "service_worker": "background.js"
   },
@@ -16,7 +16,7 @@
   "web_accessible_resources": [
     {
       "resources": ["popup.css", "popup.js", "cross.png"],
-      "matches": ["https://*.youtube.com/*"]
+      "matches": ["https://*.youtube.com/*" , "https://detoxify-yt.onrender.com/*"]
     }
   ],
   "action": {

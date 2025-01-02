@@ -9,3 +9,4 @@ services:
         value: 3.10.0 
       - key: HUGGING_FACE_TOKEN
         sync: false
+      - fromGroup: huggingface

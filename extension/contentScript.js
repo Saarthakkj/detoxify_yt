@@ -86,7 +86,12 @@ const filterVideos = async (searchString) => {
         console.log("api request sent...." , t_vector);
 
         // let temp_t_vector = t_vector.slice(0 , 6);
-        let t_dash_vector = await sendPostRequest('https://detoxify-yt.onrender.com/predict', t_vector);
+        // let t_dash_vector = await sendPostRequest('https://detoxify-yt.onrender.com/predict', t_vector);
+        
+        let t_dash_vector = await chrome.runtime.sendMessage({type : "fetchInference"}); // sending the url request to background.js and receving cors error here
+        
+
+
         console.log("t dash vector from two elements : " , t_dash_vector);
         
         // let t_dash_vector = await sendPostRequest('https://detoxify-yt.onrender.com/predict', t_vector);
