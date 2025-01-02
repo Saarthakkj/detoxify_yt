@@ -2,7 +2,7 @@ import requests
 import json
 import time
 
-url = "https://detoxify-yt.onrender.com/predict"
+url = "http://0.0.0.0:8000/predict"
 
 # Multiple titles to test
 data = [
