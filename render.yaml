@@ -6,6 +6,6 @@ services:
     startCommand: uvicorn api.index:app --host 0.0.0.0 --port $PORT --workers 1
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.0
-    envVarGroups:
-      - name: apikey 
+        value: 3.10.0 
+        
+      - fromGroup : apikey
