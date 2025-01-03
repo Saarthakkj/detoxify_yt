@@ -72,14 +72,14 @@ const filterVideos = async (searchString) => {
                 chrome.runtime.sendMessage({
                     type: "fetchInference",
                     data: t_vector
-                }, response => {
+  git                }, response => {
                     if (chrome.runtime.lastError) {
                         reject(chrome.runtime.lastError);
                     } else {
                         resolve(response);
                     }
                 });
-            });
+            }); 
 
             console.log("t dash vector ", t_dash_vector);
             
