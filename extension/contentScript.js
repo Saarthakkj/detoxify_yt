@@ -22,17 +22,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
 async function sendPostrequest(data){
+    let response1 = null;
     console.log("inside sendpostrequest");
-    let response_json = null; 
-    chrome.runtime.sendMessage({
+    let response_json = await chrome.runtime.sendMessage({
         "type" : "fetchInference",
         "data" : data
-    } , function(response){
-        console.log("content script : "  , response);
-        response_json = response;
+    } , (response) =>{
+        response1 = response;
+        console.log("content script : "  , response1);
+        return response;
     });
-
-    return response_json;
+    return response1;
 }
 
 // Function to scrape video titles from the page
@@ -83,7 +83,9 @@ const filterVideos = async (searchString) => {
             console.log("api request sent....", t_vector);
 
             
-            let t_dash_vector  = await sendPostrequest(t_vector);
+            const t_dash_vector  = sendPostrequest(t_vector).then((response) => {
+                return response;
+            });
 
             console.log("t dash vector ", t_dash_vector);
             
