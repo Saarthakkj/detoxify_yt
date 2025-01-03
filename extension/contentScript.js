@@ -21,18 +21,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 
-async function sendPostrequest(data){
-    let response1 = null;
-    console.log("inside sendpostrequest");
-    let response_json = await chrome.runtime.sendMessage({
-        "type" : "fetchInference",
-        "data" : data
-    } , (response) =>{
-        response1 = response;
-        console.log("content script : "  , response1);
-        return response;
+async function sendPostrequest(data) {
+    // console.log("inside sendpostrequest");
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({
+            "type": "fetchInference",
+            "data": data
+        }, function(response) {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+                return;
+            }
+            // console.log("content script:", response);
+            resolve(response);
+        });
     });
-    return response1;
 }
 
 // Function to scrape video titles from the page
@@ -56,7 +59,7 @@ let lastFilteredString = null;
 // Function to filter videos based on the search string
 const filterVideos = async (searchString) => {
     lastFilteredString = searchString; // Store the current filter string
-    console.log("cross image " , chrome.runtime.getURL('cross.png'));
+    // console.log("cross image " , chrome.runtime.getURL('cross.png'));
     let elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
     let thumbnails = Array.from(document.querySelectorAll('ytd-thumbnail img'));
     // console.log("[PRAKHAR]: [contentScript.js]: elements found....", elements[1].querySelector("#video-title"));
@@ -77,23 +80,21 @@ const filterVideos = async (searchString) => {
     const filterContent = async (elements) => {
         try {
             let titleVector = await scrapperTitleVector(elements);
-            console.log("[contentScript.js]: titleVector found....", titleVector);
+            // console.log("[contentScript.js]: titleVector found....", titleVector);
             
             let t_vector = titleVector.map((title) => ({ "text": title }));
-            console.log("api request sent....", t_vector);
+            // console.log("api request sent....", t_vector);
 
             
-            const t_dash_vector  = sendPostrequest(t_vector).then((response) => {
-                return response;
-            });
+            const t_dash_vector  = await sendPostrequest(t_vector);
 
-            console.log("t dash vector ", t_dash_vector);
+            // console.log("t dash vector ", t_dash_vector);
             
             if (t_dash_vector) {
                 for(let i = 0; i < t_dash_vector.length; i++) {
-                    console.log("t_dash_vector[i] : " , t_dash_vector[i]);
+                    // console.log("t_dash_vector[i] : " , t_dash_vector[i]);
                     if(t_dash_vector[i].predicted_label !== searchString && thumbnails[i] && elements[i]) {
-                        console.log("t_dash_vector[i] where label is different : " , t_dash_vector[i] ,"this is the elements array : " ,  elements[i]);
+                        // console.log("t_dash_vector[i] where label is different : " , t_dash_vector[i] ,"this is the elements array : " ,  elements[i]);
                         // elements[i].innerHTML = '';
                         thumbnails[i].src = chrome.runtime.getURL('cross.png');
                         elements[i].querySelector("#video-title").cssText += 'pointer-events: none';
@@ -117,7 +118,7 @@ const filterVideos = async (searchString) => {
                     .filter(node => node.tagName === 'YTD-RICH-ITEM-RENDERER');
                 
                 if (newElements.length > 0) {
-                    console.log("[PRAKHAR]: New elements detected:", newElements.length);
+                    // console.log("[PRAKHAR]: New elements detected:", newElements.length);
                     await filterContent(newElements);
                 }
             }
