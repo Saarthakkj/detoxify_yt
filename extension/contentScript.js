@@ -21,6 +21,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 
+async function sendPostrequest(data){
+    console.log("inside sendpostrequest");
+    let response_json = null; 
+    chrome.runtime.sendMessage({
+        "type" : "fetchInference",
+        "data" : data
+    } , function(response){
+        console.log("content script : "  , response);
+        response_json = response;
+    });
+
+    return response_json;
+}
+
 // Function to scrape video titles from the page
 let scrapperTitleVector = async (elements) => {
     let titleVector1 = elements.map((el) => {
@@ -67,19 +81,8 @@ const filterVideos = async (searchString) => {
             
             let t_vector = titleVector.map((title) => ({ "text": title }));
             console.log("api request sent....", t_vector);
-
-            const t_dash_vector = await new Promise((resolve, reject) => {
-                chrome.runtime.sendMessage({
-                    type: "fetchInference",
-                    data: t_vector
-                }, response => {
-                    if (chrome.runtime.lastError) {
-                        reject(chrome.runtime.lastError);
-                    } else {
-                        resolve(response);
-                    }
-                });
-            });
+            
+            let t_dash_vector  = await sendPostrequest(t_vector);
 
             console.log("t dash vector ", t_dash_vector);
             
@@ -95,7 +98,6 @@ const filterVideos = async (searchString) => {
                     }
                 }
             }
-            console.log("removed");
         } catch (error) {
             console.error("Error in filterContent:", error);
         }
