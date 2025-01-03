@@ -1,0 +1,9 @@
+[{
+    "id" : 1 , 
+    "priority" : 1 , 
+    "action": {"type" : "modifyHeaders" , "requestHeaders" : [{"header" : "Content-Type" , "opeartion" : "set" , "value" : "application/json"}]} , 
+    "conditions":{
+        "resourceTypes": ["xmlhttprequest"],
+        "urlFilter" : "https://detoxify-yt.onrender.com"
+    }
+}]

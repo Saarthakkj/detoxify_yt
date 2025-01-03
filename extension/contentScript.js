@@ -5,6 +5,9 @@ document.requestStorageAccess().then(() => {
     // Access denied
     console.error('Storage access denied');
 });
+
+
+
 // Test message listener
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("[PRAKHAR]: Message received:", message);
@@ -17,27 +20,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep the message channel open for sendResponse
 });
 
-async function sendPostRequest(url, data) {
-    if(data.length === 0) {
-        return null;
-    }
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-        
-        const result = await response.json();
-        // console.log('Response:', result);
-        return result;
-    } catch (error) {
-        console.error('Error:', error);
-        return null;
-    }
-}
 
 // Function to scrape video titles from the page
 let scrapperTitleVector = async (elements) => {
@@ -63,8 +45,8 @@ const filterVideos = async (searchString) => {
     console.log("cross image " , chrome.runtime.getURL('cross.png'));
     let elements = Array.from(document.querySelectorAll('ytd-rich-item-renderer'));
     let thumbnails = Array.from(document.querySelectorAll('ytd-thumbnail img'));
-    console.log("[PRAKHAR]: [contentScript.js]: elements found....", elements[1].querySelector("#video-title"));
-    console.log("[PRAKHAR]: [contentScript.js]: thumbnails found....", thumbnails[1].src);
+    // console.log("[PRAKHAR]: [contentScript.js]: elements found....", elements[1].querySelector("#video-title"));
+    // console.log("[PRAKHAR]: [contentScript.js]: thumbnails found....", thumbnails[1].src);
 
 
 
@@ -79,48 +61,43 @@ const filterVideos = async (searchString) => {
     }
 
     const filterContent = async (elements) => {
-        let titleVector = await scrapperTitleVector(elements);
-        console.log("[contentScript.js]: titleVector found....", titleVector);
-        
-        let t_vector = titleVector.map((title) => ({ "text" : title }));
-        console.log("api request sent...." , t_vector);
+        try {
+            let titleVector = await scrapperTitleVector(elements);
+            console.log("[contentScript.js]: titleVector found....", titleVector);
+            
+            let t_vector = titleVector.map((title) => ({ "text": title }));
+            console.log("api request sent....", t_vector);
 
-        // let temp_t_vector = t_vector.slice(0 , 6);
-        // let t_dash_vector = await sendPostRequest('https://detoxify-yt.onrender.com/predict', t_vector);
-        
-        let t_dash_vector = await chrome.runtime.sendMessage({type : "fetchInference"}); // sending the url request to background.js and receving cors error here
-        
+            const t_dash_vector = await new Promise((resolve, reject) => {
+                chrome.runtime.sendMessage({
+                    type: "fetchInference",
+                    data: t_vector
+                }, response => {
+                    if (chrome.runtime.lastError) {
+                        reject(chrome.runtime.lastError);
+                    } else {
+                        resolve(response);
+                    }
+                });
+            });
 
-
-        console.log("t dash vector from two elements : " , t_dash_vector);
-        
-        // let t_dash_vector = await sendPostRequest('https://detoxify-yt.onrender.com/predict', t_vector);
-        // console.log("[PRAKHAR]: [contentScript.js]: api response received....", t_dash_vector);
-        
-        if(t_dash_vector) {
-            for(let i = 0; i < t_dash_vector.length; i++) {
-                console.log("t_dash_vector[i] : " , t_dash_vector[i]);
-                if(t_dash_vector[i].predicted_label !== searchString) {
-                    console.log("t_dash_vector[i] where label is different : " , t_dash_vector[i] ,"this is the elements array : " ,  elements[i]);
-                    // elements[i].innerHTML = '';
-                    thumbnails[i].src = chrome.runtime.getURL('cross.png');
-                    elements[i].querySelector("#video-title").innerHTML = 'not allowed to watch';
-                    // if (elements[i] && elements[i].isConnected) {
-                    //     console.log("elemt to be reomved : " , elements[i]);
-                    //     try {
-                    //         // console.log(`Hiding video with label: ${t_dash_vector[i].predicted_label}`);
-                    //         // if (thumbnails[i]) {
-                    //         //     thumbnails[i].src = chrome.runtime.getURL('cross.png');
-                    //         //     // elements[i].style.opacity = '0.5'; // Optional: dim the whole card
-                    //         // }
-                    //         // let titleElement = elements[i].querySelector("#video-title");
-                    //         elements[i].innerHTML = '';
-                    //     } catch (error) {
-                    //         console.error('Error modifying element:', error);
-                    //     }
-                    // }
+            console.log("t dash vector ", t_dash_vector);
+            
+            if (t_dash_vector) {
+                for(let i = 0; i < t_dash_vector.length; i++) {
+                    console.log("t_dash_vector[i] : " , t_dash_vector[i]);
+                    if(t_dash_vector[i].predicted_label !== searchString && thumbnails[i] && elements[i]) {
+                        console.log("t_dash_vector[i] where label is different : " , t_dash_vector[i] ,"this is the elements array : " ,  elements[i]);
+                        // elements[i].innerHTML = '';
+                        thumbnails[i].src = chrome.runtime.getURL('cross.png');
+                        elements[i].querySelector("#video-title").cssText += 'pointer-events: none';
+                        elements[i].querySelector("#video-title").innerHTML = 'not allowed to watch' ; 
+                    }
                 }
             }
+            console.log("removed");
+        } catch (error) {
+            console.error("Error in filterContent:", error);
         }
     };
 

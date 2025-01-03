@@ -1,22 +1,23 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "fetchInference") {
-        // Make API call to fast api
-        fetch('https://detoxify-yt.onrender.com/predict', {
+        console.log("request data : " , request.data); 
+        fetch("http://0.0.0.0:8000/predict", {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(request.data)
         })
         .then(response => response.json())
         .then(data => {
+            console.log("API Response:", data);
             sendResponse(data);
         })
         .catch(error => {
-            console.error('Error:', error);
-            sendResponse({error: error.message});
+            console.error("Error:", error);
+            sendResponse({ error: error.message });
         });
-        
-        return true; // Required to use sendResponse asynchronously
+
+        return true; // Keep the message port open
     }
 });
