@@ -2,10 +2,23 @@ import requests
 import json
 import time
 
-url = "http://127.0.0.1:8000/predict"
+url = "https://detoxify-yt.onrender.com/predict"
 
-# Multiple titles to test
 data = [
+    {"text": "I love solving math problems!"},
+    {"text": "Magnus Carlsen's brilliant chess strategy"},
+    {"text": "I love solving math problems!"},
+    {"text": "Magnus Carlsen's brilliant chess strategy"},
+    {"text": "I love solving math problems!"},
+    {"text": "Magnus Carlsen's brilliant chess strategy"},
+    {"text": "I love solving math problems!"},
+    {"text": "Magnus Carlsen's brilliant chess strategy"},
+    {"text": "I love solving math problems!"},
+    {"text": "Magnus Carlsen's brilliant chess strategy"},
+    {"text": "I love solving math problems!"},
+    {"text": "Magnus Carlsen's brilliant chess strategy"},
+    {"text": "I love solving math problems!"},
+    {"text": "Magnus Carlsen's brilliant chess strategy"},
     {"text": "I love solving math problems!"},
     {"text": "Magnus Carlsen's brilliant chess strategy"}
 ]
