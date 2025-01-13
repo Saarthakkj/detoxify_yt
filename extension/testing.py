@@ -6,21 +6,8 @@ url = "https://detoxify-yt.onrender.com/predict"
 
 data = [
     {"text": "I love solving math problems!"},
-    {"text": "Magnus Carlsen's brilliant chess strategy"},
-    {"text": "I love solving math problems!"},
-    {"text": "Magnus Carlsen's brilliant chess strategy"},
-    {"text": "I love solving math problems!"},
-    {"text": "Magnus Carlsen's brilliant chess strategy"},
-    {"text": "I love solving math problems!"},
-    {"text": "Magnus Carlsen's brilliant chess strategy"},
-    {"text": "I love solving math problems!"},
-    {"text": "Magnus Carlsen's brilliant chess strategy"},
-    {"text": "I love solving math problems!"},
-    {"text": "Magnus Carlsen's brilliant chess strategy"},
-    {"text": "I love solving math problems!"},
-    {"text": "Magnus Carlsen's brilliant chess strategy"},
-    {"text": "I love solving math problems!"},
-    {"text": "Magnus Carlsen's brilliant chess strategy"}
+    {"text": "Magnus Carlsen's |||||||mdsnfjs|||fdsnd|| chess strategy"},
+
 ]
     
 
