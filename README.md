@@ -1,6 +1,6 @@
 # Detoxify
 
-<img src="cover.png" width="100%" alt="Detoxify Logo">
+<img src="cover.png?v=2" width="100%" alt="Detoxify Logo">
 
 > Smart Content. Clear Categories. Better YouTube Feed.
 
