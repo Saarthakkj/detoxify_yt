@@ -6,6 +6,48 @@
 
 Detoxify is an AI-powered Chrome extension and content classification system that declutters your YouTube feed by intelligently categorizing videos into Chess, Coding, Mathematics, and other categories using state-of-the-art BERT models.
 
+## 🚀 Quick Start
+
+### Local Setup
+
+1. **Clone the Repository**
+```bash
+git clone https://github.com/Saarthakkj/detoxify_yt.git
+cd detoxify_yt
+```
+
+2. **Install Dependencies**
+```bash
+npm install
+```
+
+3. **Run Backend Locally**
+```bash
+cd backend
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+4. **Configure Extension for Local Development**
+- Open `extension/background.js`
+- Replace the API URL:
+```javascript
+// Change this line
+fetch("https://detoxify-yt.onrender.com/predict", {
+// To this
+fetch("http://localhost:8000/predict", {
+```
+
+5. **Load Extension in Chrome**
+- Open Chrome and navigate to `chrome://extensions/`
+- Enable "Developer mode" (top right)
+- Click "Load unpacked"
+- Select the `extension` folder from the cloned repository
+
+### Why Run Locally?
+- Faster response times compared to hosted backend
+
+Note: The local backend will provide significantly faster classification compared to the hosted version on Render.
+
 ## 🎯 Overview
 
 Detoxify is a complete ecosystem that combines:
@@ -56,14 +98,15 @@ Detoxify is a complete ecosystem that combines:
 ## 🛠️ Technical Implementation
 
 ### Model Training Configuration
-python
+```python
 training_args = TrainingArguments(
-learning_rate=2e-5,
-per_device_train_batch_size=16,
-num_train_epochs=10,
-warmup_ratio=0.1,
-weight_decay=0.01
+    learning_rate=2e-5,
+    per_device_train_batch_size=16,
+    num_train_epochs=10,
+    warmup_ratio=0.1,
+    weight_decay=0.01
 )
+```
 
 ### System Requirements
 - Python 3.8+
@@ -71,6 +114,7 @@ weight_decay=0.01
 - Internet connection for API access
 
 ### Core Dependencies
+```
 fastapi==0.104.1
 uvicorn==0.23.2
 pydantic>=2.0.0
@@ -78,6 +122,7 @@ transformers>=4.30.0
 torch>=2.0.0
 python-dotenv==1.0.1
 requests>=2.31.0
+```
 
 ## 🔄 Workflow
 
@@ -127,12 +172,11 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
 ## 📧 Contact
 
 Prakhar Agrawal 
-- Email : prakhar20585@gmail.com
+- Email: prakhar20585@gmail.com
 
 Saarthak Saxena
 - Twitter: [@curlydazai](https://x.com/curlydazai)
 - Email: saarthaksaxena7@gmail.com
-
 
 Project: [GitHub Repository](https://github.com/Saarthakkj/detoxify_yt)
 
