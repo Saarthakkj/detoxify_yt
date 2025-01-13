@@ -1,5 +1,5 @@
 {
-  "name": "YT Filter",
+  "name": "Detoxify",
   "version": "0.1.0",
   "description": "Filtering YT videos",
   "permissions": ["storage", "tabs", "scripting", "activeTab" , "webRequest", "declarativeNetRequest" , 
@@ -22,13 +22,20 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["popup.css", "popup.js", "cross.png" , "background.js"],
-      "matches": ["https://*.youtube.com/*" , "https://detoxify-yt.onrender.com/*"]
+      "resources": [
+        "popup.css", 
+        "popup.js", 
+        "cross.png", 
+        "background.js",
+        "icons/*.png"
+      ],
+      "matches": ["https://*.youtube.com/*", "https://detoxify-yt.onrender.com/*"]
     }
   ],
   "action": {
-    "default_title": "YT Filter",
-    "default_popup": "popup.html"
+    "default_title": "Detoxify",
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
   },
   "declarative_net_request": {
     "rule_resources": [{

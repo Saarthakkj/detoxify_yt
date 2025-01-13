@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "canvas": "^3.0.1",
     "dotenv": "^16.4.7"
   }
 }

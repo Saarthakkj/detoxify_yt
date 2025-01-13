@@ -3,24 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Detoxify</title>
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
     <div id="root">
-        <h1>YT Filter</h1>
-        <!-- <input id = "searchInput" type="text" placeholder="Type keyword"/> -->
-        <!-- three radio buttons -->
-        <input type="radio" id="coding" name="category" value="coding">
-        <label for="code">Coding</label>
-        <input type="radio" id="chess" name="category" value="chess">
-        <label for="chess">Chess</label>
-        <input type="radio" id="math" name="category" value="math">
-        <label for="maths">Maths</label>
-        <!-- <input id = "searchInput" type="text" placeholder="Type 'code' for code"/> -->
-        <!-- <input id = "searchInput" type="text" placeholder="Type 'chess' for chess"/>
-        <input id = "searchInput" type="text" placeholder="Type 'maths' for maths"/> -->
-        <button id = "searchButton">Scrap and remove</button>
+        <div class="header">
+            <h1>Detoxify</h1>
+            <p class="subtitle">Select content to filter</p>
+        </div>
+        
+        <div class="category-container">
+            <div class="radio-group">
+                <input type="radio" id="coding" name="category" value="coding">
+                <label for="coding">
+                    <span class="radio-icon">💻</span>
+                    Coding
+                </label>
+            </div>
+            
+            <div class="radio-group">
+                <input type="radio" id="chess" name="category" value="chess">
+                <label for="chess">
+                    <span class="radio-icon">♟️</span>
+                    Chess
+                </label>
+            </div>
+            
+            <div class="radio-group">
+                <input type="radio" id="math" name="category" value="math">
+                <label for="math">
+                    <span class="radio-icon">📐</span>
+                    Maths
+                </label>
+            </div>
+        </div>
+
+        <button id="searchButton">Apply Filter</button>
     </div>
     <script src="popup.js"></script>
 </body>

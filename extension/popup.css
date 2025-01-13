@@ -1,9 +1,95 @@
+body {
+    width: 300px;
+    margin: 0;
+    padding: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #f8f9fa;
+}
+
 #root {
     display: flex;
     flex-direction: column;
+    gap: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+h1 {
+    color: #1a73e8;
+    margin: 0;
+    font-size: 24px;
+}
+
+.subtitle {
+    color: #5f6368;
+    margin: 5px 0 0;
+    font-size: 14px;
+}
+
+.category-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.radio-group {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    height: 300px;
-    width: 300px;
-    border: 1px solid black;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.radio-group:hover {
+    background-color: #f1f3f4;
+}
+
+input[type="radio"] {
+    display: none;
+}
+
+label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 15px;
+    color: #3c4043;
+}
+
+.radio-icon {
+    font-size: 20px;
+}
+
+input[type="radio"]:checked + label {
+    color: #1a73e8;
+    font-weight: 500;
+}
+
+#searchButton {
+    background: #1a73e8;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+#searchButton:hover {
+    background: #1557b0;
+}
+
+#searchButton:active {
+    background: #174ea6;
 }
