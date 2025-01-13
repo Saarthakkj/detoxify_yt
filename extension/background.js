@@ -1,6 +1,6 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "fetchInference") {
-        fetch("https://detoxify-yt.onrender.com/predict", {
+        fetch("http://0.0.0.0:8000/predict", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
