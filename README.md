@@ -21,33 +21,6 @@ cd detoxify_yt
 npm install
 ```
 
-3. **Run Backend Locally**
-```bash
-cd backend
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-4. **Configure Extension for Local Development**
-- Open `extension/background.js`
-- Replace the API URL:
-```javascript
-// Change this line
-fetch("https://detoxify-yt.onrender.com/predict", {
-// To this
-fetch("http://localhost:8000/predict", {
-```
-
-5. **Load Extension in Chrome**
-- Open Chrome and navigate to `chrome://extensions/`
-- Enable "Developer mode" (top right)
-- Click "Load unpacked"
-- Select the `extension` folder from the cloned repository
-
-### Why Run Locally?
-- Faster response times compared to hosted backend
-
-Note: The local backend will provide significantly faster classification compared to the hosted version on Render.
-
 ## 🎯 Overview
 
 Detoxify is a complete ecosystem that combines:
