@@ -169,5 +169,8 @@ Saarthak Saxena
 
 Project: [GitHub Repository](https://github.com/Saarthakkj/detoxify_yt)
 
+![Roadmap](roadmap.jpg)
+
+
 ---
 <p align="center">Made with ❤️ for a cleaner YouTube experience</p>
