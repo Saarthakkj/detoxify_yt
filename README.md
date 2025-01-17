@@ -169,7 +169,7 @@ Saarthak Saxena
 
 Project: [GitHub Repository](https://github.com/Saarthakkj/detoxify_yt)
 
-![Roadmap](roadmap.jpg)
+![Roadmap](roadmap.png)
 
 
 ---
