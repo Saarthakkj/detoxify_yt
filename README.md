@@ -1,3 +1,4 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 # Detoxify
 
 <img src="cover.png?v=2" width="100%" alt="Detoxify Logo">
@@ -5,6 +6,21 @@
 > Smart Content. Clear Categories. Better YouTube Feed.
 
 Detoxify is an AI-powered Chrome extension and content classification system that declutters your YouTube feed by intelligently categorizing videos into Chess, Coding, Mathematics, and other categories using state-of-the-art BERT models.
+
+## 📑 Table of Contents
+- [Quick Start](#-quick-start)
+- [Overview](#-overview)
+- [System Architecture](#-system-architecture)
+- [Features](#-features)
+- [Performance Metrics](#-performance-metrics)
+- [Technical Implementation](#-technical-implementation)
+- [Workflow](#-workflow)
+- [Security](#-security)
+- [Future Enhancements](#-future-enhancements)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Acknowledgments](#-acknowledgments)
+- [Contact](#-contact)
 
 ## 🚀 Quick Start
 
