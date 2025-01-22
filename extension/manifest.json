@@ -2,7 +2,7 @@
   "name": "Detoxify",
   "version": "0.1.0",
   "description": "Filtering YT videos",
-  "permissions": ["storage", "tabs", "scripting", "activeTab" , "webRequest", "declarativeNetRequest" , 
+  "permissions": [ "scripting", "activeTab" , "declarativeNetRequest" , 
     "declarativeNetRequestFeedback"],
   "host_permissions": ["https://*.youtube.com/*" , "https://detoxify-yt.onrender.com/*"],
   "background": {
