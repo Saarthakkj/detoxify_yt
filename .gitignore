@@ -58,3 +58,6 @@ title_keyword_pairs.txt
 .env
 .env.*
 last_response.json
+sample_response.json
+
+model/wiki.en/
