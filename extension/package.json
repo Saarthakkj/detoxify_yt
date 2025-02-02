@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "canvas": "^3.0.1",
+    "dotenv": "^16.4.7"
+  },
+  "type" : "module"
+}

@@ -61,3 +61,6 @@ last_response.json
 sample_response.json
 
 model/wiki.en/
+node_modules/
+extension/node_modules/
+extension/.env

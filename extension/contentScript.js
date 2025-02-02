@@ -1,3 +1,4 @@
+// to access DOM elements :
 document.requestStorageAccess().then(() => {
     // Access granted
     console.log("Access granted");
@@ -7,21 +8,8 @@ document.requestStorageAccess().then(() => {
 });
 
 
-
-// Test message listener
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("[PRAKHAR]: Message received:", message);
-    if (message.action === "filter") {
-        console.log("[PRAKHAR]: Filter action received with string:", message.searchString);
-        filterVideos(message.searchString);
-        // Acknowledge receipt
-        sendResponse({status: "received"});
-    }
-    return true; // Keep the message channel open for sendResponse
-});
-
-
 async function sendPostRequest(data) {
+    console.log("inside sendpostrequest");
     try {
         // Since Chrome's messaging API returns a promise when used with await
         const response = await chrome.runtime.sendMessage({
@@ -44,7 +32,7 @@ async function sendPostRequest(data) {
 
 
 // Function to scrape video titles from the page
-let scrapperTitleVector = async (elements) => {
+var scrapperTitleVector = async (elements) => {
     let titleVector1 = elements.map((el) => {
         let titleElement = el.querySelector("#video-title");
         if (titleElement) {
@@ -59,10 +47,10 @@ let scrapperTitleVector = async (elements) => {
 };
 
 // Add this at the top with other global variables
-let lastFilteredString = null;
+var lastFilteredString = null;
 
 // Add this helper function for waiting for elements to load
-const waitForElements = (selector, timeout = 10000) => {
+var waitForElements = (selector, timeout = 10000) => {
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
 
@@ -82,7 +70,7 @@ const waitForElements = (selector, timeout = 10000) => {
 };
 
 // for removing yt shorts fro the page
-const removeShorts = (elements) => {
+var removeShorts = (elements) => {
     let shortelements = Array.from(document.querySelectorAll('ytd-rich-section-renderer'));
     for(let i = 0; i < shortelements.length; i++){
         // console.log("shorts[i] : " , shortelements[i]);
@@ -157,7 +145,7 @@ const filterVideos = async (searchString) => {
                     t_dash_vector  = await sendPostRequest(t_vector).then(data =>{return data});
                 }
                 catch(error){
-                    console.log("error in sending data to bg failed , filterVideos function " , error);
+                    console.log("error in sending data to bg failed , filter Videos function " , error);
                 }
                 console.log("t dash vector : " , t_dash_vector);
                 
@@ -226,9 +214,20 @@ const filterVideos = async (searchString) => {
             console.log("[PRAKHAR]: Observer disconnected");
         }, 24 * 60 * 60 * 1000); // 24 hours
     } catch (error) {
-        console.error("Error in filterVideos:", error);
+        console.error("Error in filter Videos:", error);
     }
 };
 
-console.log("[PRAKHAR]: [contentScript.js]: script ended....");
+
+
+// calling filter videos
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "fetchInference") {
+        console.log("[PRAKHAR]: Filter action received with string:", message.searchString);
+        filterVideos(message.searchString); //filtervideos function called
+        // Acknowledge receipt
+        sendResponse({status: "received"});
+    }
+    return true; // Keep the message channel open for sendResponse
+});
 
