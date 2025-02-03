@@ -1,8 +1,27 @@
 {
-  "dependencies": {
+  "name": "webpack-demo",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --config webpack.config.js",
+    "watch": "webpack --watch --config webpack.config.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
     "@google/generative-ai": "^0.21.0",
     "canvas": "^3.0.1",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.2",
+    "babel-loader": "^8.2.5",
+    "@babel/core": "^7.20.12",
+    "@babel/preset-env": "^7.20.2"
   },
-  "type" : "module"
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
 }

@@ -2,16 +2,21 @@
   "name": "Detoxify",
   "version": "0.1.0",
   "description": "Filtering YT videos",
-  "permissions": [ "scripting", "activeTab"],
-  "host_permissions": ["https://*.youtube.com/*" , "https://detoxify-yt.onrender.com/*"],
-  "background": {
-    "service_worker": "background.js"
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   },
-  "externally_connectable":{
-    "matches": [
-      "https://*.youtube.com/*",
-      "https://detoxify-yt.onrender.com/*"
-    ]
+  "permissions": [
+    "scripting",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*",
+    "*://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -26,7 +31,7 @@
         "popup.js", 
         "cross.png"
       ],
-      "matches": ["https://*.youtube.com/*", "https://detoxify-yt.onrender.com/*"]
+      "matches": ["https://*.youtube.com/*"]
     }
   ],
   "action": {
