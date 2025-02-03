@@ -62,5 +62,5 @@ sample_response.json
 
 model/wiki.en/
 node_modules/
-extension/node_modules/
-extension/.env
+/extension/node_modules/
+/extension/.env
