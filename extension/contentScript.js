@@ -1,4 +1,3 @@
-// to access DOM elements :
 document.requestStorageAccess().then(() => {
     // Access granted
     console.log("Access granted");
@@ -9,42 +8,39 @@ document.requestStorageAccess().then(() => {
 
 
 
-//this is receiving the code from popup.js (send message with action === filter) and then calls filterVideos
-//of contentscript.js on this search string to begin filtering 
+// Test message listener
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("[contentscript.js]: Message received:", message);
+    console.log("[PRAKHAR]: Message received:", message);
     if (message.action === "filter") {
-        console.log("[contentscript.js]: Filter action received with string:", message.searchString); //calling the filtervideos for search string
+        console.log("[PRAKHAR]: Filter action received with string:", message.searchString);
         filterVideos(message.searchString);
+        // Acknowledge receipt
         sendResponse({status: "received"});
     }
-    return true; 
+    return true; // Keep the message channel open for sendResponse
 });
 
 
-
 async function sendPostRequest(data) {
-    console.log("inside sendpostrequest");
     try {
-        console.log("inside sendpostrequest with data " , data);
-        // Since Chrome's messaging API returns a promise when used with await
-        const response = await chrome.runtime.sendMessage({
+        console.log("Sending data to background.js:", data);
+        // Send message to background.js and wait for response
+        const t_dash_vector = await chrome.runtime.sendMessage({
             type: "fetchInference",
             data: data
         });
 
-        console.log("response : " , response);
-        
-        return response;
-    } catch (e) {
-        console.error("Error in sendPostRequest:", e);
-        throw e; // Re-throw to be handled by the caller
+        console.log("Received response from background.js:", t_dash_vector);
+        return t_dash_vector; // Directly return the array
+    } catch (error) {
+        console.error("Error in sendPostRequest:", error);
+        throw error; // Re-throw to be handled by the caller
     }
 }
 
 
 // Function to scrape video titles from the page
-var scrapperTitleVector = async (elements) => {
+let scrapperTitleVector = async (elements) => {
     let titleVector1 = elements.map((el) => {
         let titleElement = el.querySelector("#video-title");
         if (titleElement) {
@@ -59,10 +55,10 @@ var scrapperTitleVector = async (elements) => {
 };
 
 // Add this at the top with other global variables
-var lastFilteredString = null;
+let lastFilteredString = null;
 
 // Add this helper function for waiting for elements to load
-var waitForElements = (selector, timeout = 10000) => {
+const waitForElements = (selector, timeout = 10000) => {
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
 
@@ -82,8 +78,8 @@ var waitForElements = (selector, timeout = 10000) => {
 };
 
 // for removing yt shorts fro the page
-var removeShorts = (elements) => {
-    let shortelements = Array.from(document.querySelectorAll('ytd-rich-section-renderer'));
+const removeShorts = (elements) => {
+    let shortelements = Array.from(elements.querySelectorAll('ytd-rich-section-renderer'));
     for(let i = 0; i < shortelements.length; i++){
         // console.log("shorts[i] : " , shortelements[i]);
         shortelements[i].style.display= 'none';
@@ -91,9 +87,8 @@ var removeShorts = (elements) => {
 };
 
 // Function to filter videos based on the search string
-var filterVideos = async (searchString) => {
+const filterVideos = async (searchString) => {
     lastFilteredString = searchString; 
-    console.log("[filter videos] search string :" , searchString);
     try {
         // Wait for elements to load
         const elements = await waitForElements('ytd-rich-item-renderer');
@@ -145,21 +140,27 @@ var filterVideos = async (searchString) => {
         const filterContent = async (elements) => {
             removeShorts(elements);
             try {
-                // console.log("elements ;" , elements) ;
+                console.log("elements ;" , elements) ;
                 let titleVector = await scrapperTitleVector(elements);
                 let t_vector = titleVector.map((title) => ({ "text": title }));
                 // console.log("api request sent....", t_vector);
 
                 
-
+                const tries = 10;
                 let t_dash_vector = []; 
-                // console.log("t_vector sent: ", t_vector);
-                try{
-                    t_dash_vector  = await sendPostRequest(t_vector).then(data =>{return data});
+                console.log("t_vector sent: ", t_vector);
+                let n_try = 0;
+                let apiresponse = false;
+                while(n_try++ < tries && !apiresponse){
+                    try{
+                        t_dash_vector  = await sendPostRequest(t_vector).then(data =>{return data});
+                        apiresponse = true;
+                    }
+                    catch(error){
+                        console.log("error in sending data to bg failed , filterVideos function " , error);
+                    }
                 }
-                catch(error){
-                    console.log("error in sending data to bg failed , filter Videos function " , error);
-                }
+                
                 console.log("t dash vector : " , t_dash_vector);
                 
                 if (t_dash_vector) {
@@ -176,16 +177,15 @@ var filterVideos = async (searchString) => {
                             item.input_text === video_title
                         );
 
-                        console.log("Comparing:", {
-                            videoTitle: video_title,
-                            matchedItem: t_dash_item,
-                            searchString: lastFilteredString
-                        });
+                        // console.log("Comparing:", {
+                        //     videoTitle: video_title,
+                        //     matchedItem: t_dash_item,
+                        //     searchString: lastFilteredString
+                        // });
 
                         if (t_dash_item && t_dash_item.predicted_label !== lastFilteredString) {
                             await processElement(elements[i]);
                         }
-                        
                     }
                 }
             } catch (error) {
@@ -204,8 +204,32 @@ var filterVideos = async (searchString) => {
                         .filter(node => node.tagName === 'YTD-RICH-ITEM-RENDERER');
                     
                     if (newElements.length > 0) {
-                        console.log("[contentscript.js]: New elements detected:", newElements.length);
-                        await filterContent(newElements);
+                        console.log("[PRAKHAR]: New elements detected:", newElements.length);
+                        const newTitles = newElements.map(element => {
+                            const titleElement = element.querySelector("#video-title");
+                            return titleElement ? titleElement.textContent.trim() : null;
+                        }).filter(title => title !== null);
+
+                        const newApiResponse = await sendPostRequest(newTitles);
+                        
+                        for (let i = 0; i < newElements.length; i++) {
+                            try {
+                                const thumbnail = await waitForThumbnail(element);
+                                const titleElement = element.querySelector("#video-title");
+                                
+                                if (thumbnail) {
+                                    thumbnail.src = chrome.runtime.getURL('cross.png');
+                                }
+                                
+                                if (titleElement) {
+                                    titleElement.innerHTML = 'not allowed to watch';
+                                }
+                                
+                                element.style.pointerEvents = 'none';
+                            } catch (error) {
+                                console.error("Error processing new element:", error);
+                            }
+                        }
                     }
                 }
             }
@@ -218,17 +242,17 @@ var filterVideos = async (searchString) => {
                 childList: true,
                 subtree: true
             });
-            console.log("[contentscript.js]: Observer started");
+            console.log("[PRAKHAR]: Observer started");
         }
 
         // Clean up previous observer after 24 hours (or adjust as needed)
         setTimeout(() => {
             observer.disconnect();
-            console.log("[contentscript.js]: Observer disconnected");
+            console.log("[PRAKHAR]: Observer disconnected");
         }, 24 * 60 * 60 * 1000); // 24 hours
     } catch (error) {
-        console.error("Error in filter Videos:", error);
+        console.error("Error in filterVideos:", error);
     }
 };
 
-
+console.log("[PRAKHAR]: [contentScript.js]: script ended....");
