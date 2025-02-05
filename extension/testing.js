@@ -1,18 +1,20 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const {system_prompt , padding} = require("./utils");
-import 'dotenv/config';
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { system_prompt } = require('./utils.js');
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 
-gemini = os.environ['GEMINI_GENERATIVE_LANGUAGE_CLIENT_API'];
+const gemini = process.env.GEMINI_GENERATIVE_LANGUAGE_CLIENT_API;
 
-genai.configure(api_key=gemini)
+const genai = new GoogleGenerativeAI(gemini);
 
+const genModel = genai.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: system_prompt
+});
 
-cache = caching.CachedContent.create(
-    model='models/gemini-1.5-flash-001',
-    system_instruction=system_prompt + padding
-)
+async function main() {
+    const prompt = "Explain how AI works";
+    const result = await genModel.generateContent(prompt);
+    console.log(result.response.text());
+}
 
-
-model = genai.GenerativeModel.from_cached_content(cached_content=cache)
-response = model.generate_content("Generate a title for a youtube video about ")
-console.log(response);
+main().catch(console.error);

@@ -1,3 +1,4 @@
+// to access DOM elements :
 document.requestStorageAccess().then(() => {
     // Access granted
     console.log("Access granted");
@@ -8,43 +9,42 @@ document.requestStorageAccess().then(() => {
 
 
 
-// Test message listener
+//this is receiving the code from popup.js (send message with action === filter) and then calls filterVideos
+//of contentscript.js on this search string to begin filtering 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("[PRAKHAR]: Message received:", message);
+    console.log("[contentscript.js]: Message received:", message);
     if (message.action === "filter") {
-        console.log("[PRAKHAR]: Filter action received with string:", message.searchString);
+        console.log("[contentscript.js]: Filter action received with string:", message.searchString); //calling the filtervideos for search string
         filterVideos(message.searchString);
-        // Acknowledge receipt
         sendResponse({status: "received"});
     }
-    return true; // Keep the message channel open for sendResponse
+    return true; 
 });
 
 
+
 async function sendPostRequest(data) {
+    console.log("inside sendpostrequest");
     try {
+        console.log("inside sendpostrequest with data " , data);
         // Since Chrome's messaging API returns a promise when used with await
         const response = await chrome.runtime.sendMessage({
             type: "fetchInference",
             data: data
         });
 
-        // Check if response contains error
-        if (response.error) {
-            throw new Error(response.error);
-        }
-
-        // Return just the data, not the promise
-        return response.data;
-    } catch (error) {
-        console.error("Error in sendPostRequest:", error);
-        throw error; // Re-throw to be handled by the caller
+        console.log("response : " , response);
+        
+        return response;
+    } catch (e) {
+        console.error("Error in sendPostRequest:", e);
+        throw e; // Re-throw to be handled by the caller
     }
 }
 
 
 // Function to scrape video titles from the page
-let scrapperTitleVector = async (elements) => {
+var scrapperTitleVector = async (elements) => {
     let titleVector1 = elements.map((el) => {
         let titleElement = el.querySelector("#video-title");
         if (titleElement) {
@@ -59,10 +59,10 @@ let scrapperTitleVector = async (elements) => {
 };
 
 // Add this at the top with other global variables
-let lastFilteredString = null;
+var lastFilteredString = null;
 
 // Add this helper function for waiting for elements to load
-const waitForElements = (selector, timeout = 10000) => {
+var waitForElements = (selector, timeout = 10000) => {
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
 
@@ -82,7 +82,7 @@ const waitForElements = (selector, timeout = 10000) => {
 };
 
 // for removing yt shorts fro the page
-const removeShorts = (elements) => {
+var removeShorts = (elements) => {
     let shortelements = Array.from(document.querySelectorAll('ytd-rich-section-renderer'));
     for(let i = 0; i < shortelements.length; i++){
         // console.log("shorts[i] : " , shortelements[i]);
@@ -91,8 +91,9 @@ const removeShorts = (elements) => {
 };
 
 // Function to filter videos based on the search string
-const filterVideos = async (searchString) => {
+var filterVideos = async (searchString) => {
     lastFilteredString = searchString; 
+    console.log("[filter videos] search string :" , searchString);
     try {
         // Wait for elements to load
         const elements = await waitForElements('ytd-rich-item-renderer');
@@ -144,20 +145,20 @@ const filterVideos = async (searchString) => {
         const filterContent = async (elements) => {
             removeShorts(elements);
             try {
-                console.log("elements ;" , elements) ;
+                // console.log("elements ;" , elements) ;
                 let titleVector = await scrapperTitleVector(elements);
                 let t_vector = titleVector.map((title) => ({ "text": title }));
-                console.log("api request sent....", t_vector);
+                // console.log("api request sent....", t_vector);
 
                 
 
                 let t_dash_vector = []; 
-                console.log("t_vector sent: ", t_vector);
+                // console.log("t_vector sent: ", t_vector);
                 try{
                     t_dash_vector  = await sendPostRequest(t_vector).then(data =>{return data});
                 }
                 catch(error){
-                    console.log("error in sending data to bg failed , filterVideos function " , error);
+                    console.log("error in sending data to bg failed , filter Videos function " , error);
                 }
                 console.log("t dash vector : " , t_dash_vector);
                 
@@ -203,7 +204,7 @@ const filterVideos = async (searchString) => {
                         .filter(node => node.tagName === 'YTD-RICH-ITEM-RENDERER');
                     
                     if (newElements.length > 0) {
-                        console.log("[PRAKHAR]: New elements detected:", newElements.length);
+                        console.log("[contentscript.js]: New elements detected:", newElements.length);
                         await filterContent(newElements);
                     }
                 }
@@ -217,18 +218,17 @@ const filterVideos = async (searchString) => {
                 childList: true,
                 subtree: true
             });
-            console.log("[PRAKHAR]: Observer started");
+            console.log("[contentscript.js]: Observer started");
         }
 
         // Clean up previous observer after 24 hours (or adjust as needed)
         setTimeout(() => {
             observer.disconnect();
-            console.log("[PRAKHAR]: Observer disconnected");
+            console.log("[contentscript.js]: Observer disconnected");
         }, 24 * 60 * 60 * 1000); // 24 hours
     } catch (error) {
-        console.error("Error in filterVideos:", error);
+        console.error("Error in filter Videos:", error);
     }
 };
 
-console.log("[PRAKHAR]: [contentScript.js]: script ended....");
 

@@ -1,66 +1,60 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const {system_prompt , padding} = require("./utils");
-import load_dotenv from 'dotenv';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+// const { system_prompt } = require('./utils.js');
 
-load_dotenv();
-gemini = os.environ['GEMINI_GENERATIVE_LANGUAGE_CLIENT_API'];
+let genModel = null;
 
-genai.configure(api_key=gemini)
+// Initialize the model
+async function initializeModel() {
+    try {
+        // Store API key in chrome.storage.local
+        const { GEMINI_API_KEY } = await chrome.storage.local.get('GEMINI_GENERATIVE_LANGUAGE_CLIENT_API');
+        
+        if (!GEMINI_API_KEY) {
+            throw new Error('API key not found');
+        }
 
-const genAI = new GoogleGenerativeAI("YOUR_API_KEY");
+        const genai = new GoogleGenerativeAI(GEMINI_API_KEY);
+        genModel = genai.getGenerativeModel({
+            model: "gemini-1.5-pro",
+            systemInstruction: system_prompt 
+        });
+        console.log("[background.js] Gemini model initialized successfully");
+    } catch (e) {
+        console.error("[background.js] Error initializing model:", e);
+    }
+}
 
-cache = caching.CachedContent.create(
-    model='models/gemini-1.5-flash-001',
-    system_instruction=system_prompt + padding
-)
-
-
-model = genAI.GenerativeModel.from_cached_content(cached_content=cache)
-console.log(result.response.text());
-
-
-
+// Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "fetchInference") {
-
-        //! for render deployed model : 
-
-        // fetch("https://detoxify-yt.onrender.com/predict", {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //         'Accept': 'application/json'
-        //     },
-        //     body: JSON.stringify(request.data)
-        // })
-        // .then(async response => {
-        //     // Check if response is ok, if not throw error with status
-        //     if (!response.ok) {
-        //         const errorText = await response.text();
-        //         throw new Error(`Server error (${response.status}): ${errorText}`);
-        //     }
-        //     return response.json();
-        // })
-        // .then(data => {
-        //     sendResponse({ success: true, data: data });
-        // })
-        // .catch(error => {
-        //     console.error("Fetch error:", error);
-        //     sendResponse({ success: false, error: error.message });
-        // });
-
-        //! for gemini api key : 
-
+        console.log("[background.js] Message received:", request);
         
+        (async () => {
+            try {
+                if (!genModel) {
+                    await initializeModel();
+                }
+                
+                const result = await genModel.generateContent(request.data);
+                const response = await result.response;
+                const text = response.text();
+                
+                console.log("[background.js] Inference successful:", text);
+                sendResponse({ success: true, data: text });
+            } catch (error) {
+                console.error("[background.js] Inference error:", error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
         
-        
-
-
-
-
-
-
-
-        return true; // Keep the message channel open for async response
+        return true;
     }
 });
+
+// Initialize on install and startup
+chrome.runtime.onInstalled.addListener(initializeModel);
+chrome.runtime.onStartup.addListener(initializeModel);
+
+// const keepAlive = () => setInterval(chrome.runtime.getPlatformInfo, 20e3);
+// chrome.runtime.onStartup.addListener(keepAlive);
+// keepAlive();
