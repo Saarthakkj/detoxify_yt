@@ -1,13 +1,5 @@
-// Import statements need to be fixed for webpack
-
-// following this tutorial to solve the import issue  : https://webpack.js.org/guides/getting-started/
-// solution : using webpack 
-try{
-    import { GoogleGenerativeAI } from '@google/generative-ai';
-    import system_prompt from './utils.js';
-}catch(e){
-    console.log("throw error : ", e);
-}
+import { GoogleGenerativeAI } from "@google/generative-ai";
+// const { system_prompt } = require('./utils.js');
 
 let genModel = null;
 

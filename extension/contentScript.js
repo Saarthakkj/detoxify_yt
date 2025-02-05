@@ -14,7 +14,7 @@ document.requestStorageAccess().then(() => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("[contentscript.js]: Message received:", message);
     if (message.action === "filter") {
-        console.log("[contentscript.js]: Filter action received with string:", message.searchString);
+        console.log("[contentscript.js]: Filter action received with string:", message.searchString); //calling the filtervideos for search string
         filterVideos(message.searchString);
         sendResponse({status: "received"});
     }

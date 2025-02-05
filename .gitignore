@@ -64,3 +64,4 @@ model/wiki.en/
 node_modules/
 /extension/node_modules/
 /extension/.env
+/learning/
