@@ -5,7 +5,7 @@ let genModel = null;
 // Initialize the model
 async function initializeModel() {
     try {
-        const result = await chrome.storage.sync.get(['GEMINI_API_KEY']);
+        // const result = await chrome.storage.sync.get(['GEMINI_API_KEY']);
         const GEMINI_API_KEY = result.GEMINI_API_KEY;
         if (!GEMINI_API_KEY) {
             throw new Error('API key not found');
@@ -68,12 +68,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Keep the message channel open for sendResponse
     }
 });
-// ... existing code ...
-
-// Initialize on install and startup
 
 
-chrome.runtime.onStartup.addListener(initializeModel);
-chrome.storage.sync.set({ GEMINI_API_KEY: 'your_api_key_here' }, () => {
-    console.log('API key saved to Chrome storage');
-});
+
+// chrome.runtime.onStartup.addListener(initializeModel);
+// chrome.storage.sync.set({ GEMINI_API_KEY: 'your_api_key_here' }, () => {
+//     console.log('API key saved to Chrome storage');
+// });
