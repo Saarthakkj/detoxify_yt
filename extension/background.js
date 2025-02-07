@@ -75,7 +75,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 chrome.runtime.onStartup.addListener(initializeModel);
 
-// // store your api key running this permanently in your browser
-// chrome.storage.sync.set({ GEMINI_API_KEY: 'AIzaSyBqjrDJl6LEoNYZBVpca38yauEIMyXZAjo' }, () => {
+//! store your api key running this permanently in your browser:
+
+// chrome.storage.sync.set({ GEMINI_API_KEY: 'your_api_key_here' }, () => {
 //     console.log('API key saved to Chrome storage');
 // });
