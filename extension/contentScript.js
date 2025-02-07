@@ -78,63 +78,69 @@ const waitForElements = (selector, timeout = 10000) => {
 };
 
 // for removing yt shorts fro the page
-const removeShorts = (elements) => {
-    let shortelements = Array.from(elements.querySelectorAll('ytd-rich-section-renderer'));
+const removeShorts = () => {
+    let shortelements = document.getElementsByClassName('ytd-rich-section-renderer');
     for(let i = 0; i < shortelements.length; i++){
-        // console.log("shorts[i] : " , shortelements[i]);
+
+        console.log("shorts[i] : " , shortelements[i]);
         shortelements[i].style.display= 'none';
+    }
+};
+
+// removing function for each element (that waits for thumbnails and titlte to load) and then remove every element passed through it
+const processElement = async (element) => {
+    // Wait for both thumbnail and title to be available
+    const waitForThumbnail = () => {
+        return new Promise((resolve) => {
+            const checkThumbnail = () => {
+                const thumbnail = element.querySelector('ytd-thumbnail img');
+                if (thumbnail && thumbnail.src) {
+                    resolve(thumbnail);
+                } else {
+                    setTimeout(checkThumbnail, 100);
+                }
+            };
+            checkThumbnail();
+        });
+    };
+
+    try {
+        const thumbnail = await waitForThumbnail();
+        const titleElement = element.querySelector("#video-title");
+        
+        // Process thumbnail
+        if (thumbnail) {
+            
+            thumbnail.src = chrome.runtime.getURL('cross.png');
+        }
+        
+        // Process title
+        if (titleElement) {
+            titleElement.innerHTML = 'not allowed to watch';
+        }
+        
+        // Disable interactions
+        element.style.pointerEvents = 'none';
+        
+    } catch (error) {
+        console.error("Error processing element:", error);
     }
 };
 
 // Function to filter videos based on the search string
 const filterVideos = async (searchString) => {
     lastFilteredString = searchString; 
+
     try {
         // Wait for elements to load
         const elements = await waitForElements('ytd-rich-item-renderer');
+
+        // console.log(elements);
         
         // Remove Shorts first
-        removeShorts(elements);
+        removeShorts();
         
-        // removing function for each element (that waits for thumbnails and titlte to load) and then remove every element passed through it
-        const processElement = async (element) => {
-            // Wait for both thumbnail and title to be available
-            const waitForThumbnail = () => {
-                return new Promise((resolve) => {
-                    const checkThumbnail = () => {
-                        const thumbnail = element.querySelector('ytd-thumbnail img');
-                        if (thumbnail && thumbnail.src) {
-                            resolve(thumbnail);
-                        } else {
-                            setTimeout(checkThumbnail, 100);
-                        }
-                    };
-                    checkThumbnail();
-                });
-            };
-
-            try {
-                const thumbnail = await waitForThumbnail();
-                const titleElement = element.querySelector("#video-title");
-                
-                // Process thumbnail
-                if (thumbnail) {
-                    
-                    thumbnail.src = chrome.runtime.getURL('cross.png');
-                }
-                
-                // Process title
-                if (titleElement) {
-                    titleElement.innerHTML = 'not allowed to watch';
-                }
-                
-                // Disable interactions
-                element.style.pointerEvents = 'none';
-                
-            } catch (error) {
-                console.error("Error processing element:", error);
-            }
-        };
+        
 
         // Modify the filterContent function
         const filterContent = async (elements) => {
