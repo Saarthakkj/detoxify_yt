@@ -84,6 +84,8 @@ input[type="radio"]:checked + label {
     font-size: 14px;
     font-weight: 500;
     transition: background-color 0.2s;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
 }
 
 #searchButton:hover {
@@ -92,4 +94,50 @@ input[type="radio"]:checked + label {
 
 #searchButton:active {
     background: #174ea6;
+}
+
+#searchButton.active {
+    opacity: 1;
+}
+
+input[name="category"]:checked ~ #searchButton {
+    opacity: 1;
+}
+
+.api-key-container {
+    padding: 10px;
+    margin: 10px 0;
+    transition: all 0.3s ease;
+}
+
+.api-key-container.hidden {
+    display: none;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.api-input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.api-button {
+    padding: 8px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.api-button:hover {
+    background-color: #45a049;
 }

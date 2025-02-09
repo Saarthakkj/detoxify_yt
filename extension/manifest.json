@@ -20,8 +20,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://*.youtube.com/*"],
-      "js": ["contentScript.js"]
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["contentScript.js"],
+      "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
@@ -37,7 +38,7 @@
   "action": {
     "default_title": "Detoxify",
     "default_popup": "popup.html",
-    "default_icon": "icon.png"
+    "default_icon": "icons/icon.png"
   },
   "manifest_version": 3
-} 
+}

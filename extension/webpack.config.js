@@ -6,44 +6,25 @@ const __dirname = path.dirname(__filename);
 
 
 export default {
-  entry: './background.js',
+  entry: './index.js',
   output: {
-    filename: 'background.bundle.js',
-    path: path.resolve(__dirname, './dist'),
+    filename: 'geneartive-ai-bundle.js',
+    path: path.resolve(__dirname, 'dist'),
+    library: {
+      type : "module"
+    } 
   },
-  mode: 'production',
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              '@babel/preset-env',
-              {
-                plugins: [
-                  '@babel/plugin-transform-runtime'
-                ]
-              }
-            ]
-          }
-        }
-      },
-      {
-        test: /\.m?js$/,
-        resolve: {
-          fullySpecified: false
-        }
-      }
-    ]
+  experiments  :{
+    outputModule : true , 
+  } ,
+  resolve: {
+    alias : {
+      "@google/generative-ai" : path.resolve(__dirname , 'node_modules/@google/generative-ai')
+    } ,
   },
+  mode: 'production' ,
   devServer: {
     static: './dist',
   },
-  resolve: {
-    alias: {
-      '@google/generative-ai': '@google/generative-ai/dist/index.js',
-    },
-  }
+  
 };
