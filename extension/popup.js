@@ -1,32 +1,58 @@
 // This ensures the script runs after the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", async () => {
-    // Grab the button by its ID
+    try {
+        // Load saved API key and category
+        const result = await chrome.storage.sync.get(['GEMINI_API_KEY', 'USER_CATEGORY']);
+        
+        // Handle API key visibility
+        const apiKeyContainer = document.querySelector('.api-key-container');
+        if (result.GEMINI_API_KEY) {
+            apiKeyContainer.style.display = 'none';
+        } else {
+            apiKeyContainer.style.display = 'block';
+        }
+
+        // Restore saved category selection
+        if (result.USER_CATEGORY) {
+            const savedCategory = document.querySelector(`input[value="${result.USER_CATEGORY}"]`);
+            if (savedCategory) {
+                savedCategory.checked = true;
+            }
+        }
+    } catch (error) {
+        console.error('[popup.js] Error loading saved data:', error);
+    }
+
+    // Search button click handler
     const searchButton = document.getElementById("searchButton");
+    searchButton.addEventListener("click", async () => {
+        const selectedCategory = document.querySelector('input[name="category"]:checked');
+        
+        if (!selectedCategory) {
+            alert('Please select a category');
+            return;
+        }
 
-    // Add an event listener for the 'click' event
-    searchButton.addEventListener("click", () => {
-        console.log("[PRAKHAR]: [popup.js]: button clicked....");
+        const category = selectedCategory.value;
+        
+        // Save the selected category
+        try {
+            await chrome.storage.sync.set({ USER_CATEGORY: category });
+        } catch (error) {
+            console.error('[popup.js] Error saving category:', error);
+        }
 
-        // Grab the search input field by its ID
-        // const searchInput = document.getElementById("searchInput");
-        // const searchString = searchInput.value;
-        const category = document.querySelector('input[name="category"]:checked').value;
-
-        console.log(" [popup.js]: category....", category);
-
-        // Query for the currently active tab in the current window
+        // Query for active tab and execute content script
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            // First check if we can inject the content script
             chrome.scripting.executeScript({
                 target: { tabId: tabs[0].id },
                 files: ['contentScript.js']
             }, () => {
-                // After content script is injected, send the message
                 chrome.tabs.sendMessage(tabs[0].id, {
                     action: "filter", 
                     searchString: category
                 });
-                console.log("[PRAKHAR]: [popup.js]: content script injected and message sent....");
+                console.log("[popup.js]: Content script injected and message sent");
             });
         });
     });

@@ -1,3 +1,52 @@
+async function initializeWithSavedCategory() {
+    try {
+        const result = await chrome.storage.sync.get(['USER_CATEGORY', 'GEMINI_API_KEY']);
+        if (result.USER_CATEGORY && result.GEMINI_API_KEY) {
+            console.log("[contentscript.js]: Found saved category:", result.USER_CATEGORY);
+            window.userCategory = result.USER_CATEGORY;
+            
+            // Start observer immediately if we have the category
+            if (!window.observerRunning) {
+                window.observerRunning = true;
+                setupObserver();
+            }
+            
+            // Get initial elements on the page
+            const initialElements = await waitForElements('YTD-RICH-ITEM-RENDERER');
+            if (initialElements && initialElements.length > 0) {
+                console.log("[contentscript.js]: Found initial elements, starting filtering...");
+                await filterVideos(initialElements);
+            }
+
+            // Handle initial shorts
+            const initialShorts = await waitForElements('YTD-RICH-SECTION-RENDERER');
+            if (initialShorts && initialShorts.length > 0) {
+                console.log("[contentscript.js]: Found initial shorts, removing...");
+                await removeShorts(initialShorts);
+            }
+        }
+    } catch (error) {
+        console.error("[contentscript.js]: Error initializing with saved category:", error);
+    }
+}
+
+// Add this to ensure the script runs when YouTube loads initially
+window.addEventListener('load', initializeWithSavedCategory);
+
+// Keep the DOMContentLoaded listener for redundancy
+document.addEventListener('DOMContentLoaded', initializeWithSavedCategory);
+
+// Also call it when YouTube's navigation occurs (for SPA navigation)
+let lastUrl = location.href;
+new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+        lastUrl = url;
+        console.log('[contentscript.js]: YouTube navigation detected, reinitializing...');
+        initializeWithSavedCategory();
+    }
+}).observe(document, { subtree: true, childList: true });
+
 document.requestStorageAccess().then(() => {
     console.log("Access granted");
 }).catch(() => {
@@ -71,19 +120,20 @@ function setupObserver() {
 }
 
 
-// Modify your message listener to use the setupObserver function
+// Modify the message listener
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    window.userCategory = message.searchString;
+    if (message.searchString) {
+        window.userCategory = message.searchString;
+    }
 
     console.log("[contentscript.js]: Message received:", message);
 
-    if (!window.observerRunning) {
-        window.observerRunning = true;
-        setupObserver();
-    }
-
     if (message.action === "filter") {
         console.log("[contentscript.js]: Filter action received with string:", window.userCategory);
+        if (!window.observerRunning) {
+            window.observerRunning = true;
+            setupObserver();
+        }
         removeShorts();
         filterVideos();
         sendResponse({status: "received"});

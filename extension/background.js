@@ -71,8 +71,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 // Initialize on install and startup
-
-
 chrome.runtime.onStartup.addListener(initializeModel);
 
 //! store your api key running this permanently in your browser:
