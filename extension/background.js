@@ -1,4 +1,7 @@
-import { GoogleGenerativeAI, system_prompt } from './dist/generative-ai-bundle.js';
+import {GoogleGenerativeAI , system_prompt} from './dist/geneartive-ai-bundle.js';
+// import {system_prompt} from './dist/generative-ai-bundle.js';
+// ... rest of background.js
+// import { system_prompt } from './utils.js';
 
 let genModel = null;
 
@@ -6,14 +9,13 @@ let genModel = null;
 async function initializeModel() {
     try {
         // const result = await chrome.storage.sync.get(['GEMINI_API_KEY']);
-        const GEMINI_API_KEY = result.GEMINI_API_KEY;
+        const GEMINI_API_KEY = "AIzaSyAD4K-w1C8wl6lg1QGJ-XB6Xi59Pd6rykQ";
         if (!GEMINI_API_KEY) {
             throw new Error('API key not found');
         }
-
         const genai = new GoogleGenerativeAI(GEMINI_API_KEY);
         genModel = genai.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.0-flash-lite-preview-02-05",
             systemInstruction: system_prompt
         });
         console.log("[background.js] Gemini model initialized successfully");

@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // const searchString = searchInput.value;
         const category = document.querySelector('input[name="category"]:checked').value;
 
-        console.log("[PRAKHAR]: [popup.js]: category....", category);
+        console.log(" [popup.js]: category....", category);
 
         // Query for the currently active tab in the current window
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {

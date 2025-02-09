@@ -1,28 +1,102 @@
 document.requestStorageAccess().then(() => {
-    // Access granted
     console.log("Access granted");
 }).catch(() => {
-    // Access denied
     console.error('Storage access denied');
 });
 
-// Add this at the top with other global variables
-let userCategory = null;
-let processedElements = new WeakSet();
+// Initialize counters
+var removeShortsCount = 0;
+var filterVideosCount = 0;
 
-//call the filterVideos function
+var processedSections = new WeakSet();
+// let userCategory = null;
+var processedElements = new WeakSet();
+
+
+// Initialize observer at the top level
+let observer = null;
+
+// Function to setup observer
+function setupObserver() {
+    if (observer) {
+        observer.disconnect();
+    }
+
+    let collectedItemNodes = [];
+    let collectedSectionNodes = [];
+
+    observer = new MutationObserver(async (mutations) => {
+        try {
+            mutations.forEach(function(mutation) {
+                // Collect nodes from this mutation
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.tagName === 'YTD-RICH-ITEM-RENDERER') {
+                        collectedItemNodes.push(node);
+                    }
+                    if (node.tagName === 'YTD-RICH-SECTION-RENDERER') {
+                        collectedSectionNodes.push(node);
+                    }
+                });
+            });
+
+            // Process collected nodes outside the mutations.forEach loop
+            if (collectedItemNodes.length > 25) {
+                console.log("[Observer] Processing video batch:", collectedItemNodes.length);
+                await filterVideos(collectedItemNodes);
+                // Clear processed nodes
+                collectedItemNodes = [];
+            }
+            
+            if (collectedSectionNodes.length > 0) {
+                console.log("[Observer] Processing shorts:", collectedSectionNodes.length);
+                await removeShorts(collectedSectionNodes);
+                // Clear processed nodes
+                collectedSectionNodes = [];
+            }
+ 
+        } catch (error) {
+            console.error("Error in MutationObserver callback:", error);
+        }
+    });
+
+    // Start observing
+    const contentContainer = document.querySelector('#contents');
+    if (contentContainer) {
+        observer.observe(contentContainer, {
+            childList: true,
+            subtree: true
+        });
+        console.log("[contentscript.js]: Observer started");
+    }
+}
+
+// Modify your message listener to use the setupObserver function
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    userCategory = message.searchString ; 
+    window.userCategory = message.searchString;
     console.log("[contentscript.js]: Message received:", message);
+
+    if (!window.observerRunning) {
+        window.observerRunning = true;
+        setupObserver();
+    }
+
     if (message.action === "filter") {
-        console.log("[contentscript.js]: Filter action received with string:",userCategory);
+        console.log("[contentscript.js]: Filter action received with string:", window.userCategory);
+        removeShorts();
         filterVideos();
-        // Acknowledge receipt
         sendResponse({status: "received"});
     }
-    return true; // Keep the message channel open for sendResponse
+    return true;
 });
 
+// Clean up observer after 24 hours
+setTimeout(() => {
+    if (observer) {
+        observer.disconnect();
+        window.observerRunning = false;
+        console.log("[contentscript.js]: Observer disconnected after timeout");
+    }
+}, 24 * 60 * 60 * 1000);
 
 async function sendPostRequest(data) {
     try {
@@ -43,7 +117,7 @@ async function sendPostRequest(data) {
 
 
 // Function to scrape video titles from the page
-let scrapperTitleVector = async (elements) => {
+var scrapperTitleVector = async (elements) => {
     let titleVector1 = elements.map((el) => {
         let titleElement = el.querySelector("#video-title");
         if (titleElement) {
@@ -60,128 +134,132 @@ let scrapperTitleVector = async (elements) => {
 
 
 // Add this helper function for waiting for elements to load
-const waitForElements = (selector, timeout = 10000) => {
-    return new Promise((resolve, reject) => {
-        const startTime = Date.now();
+var waitForElements = (selector, timeout = 1000) => {
+    try {
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
 
-        const checkElements = () => {
-            //("selector " , selector);
-            const elements = document.querySelectorAll(selector);
-            //console.log("elements "  , elements);
-            if (elements.length > 0) {
-                resolve(Array.from(elements));
-            } else if (Date.now() - startTime >= timeout) {
-                reject(new Error(`Timeout waiting for ${selector}`));
-            } else {
-                setTimeout(checkElements, 100);
-            }
-        };
+            const checkElements = () => {
+                const elements = document.getElementsByTagName(selector);
+                if (elements.length > 0) {
+                    resolve(Array.from(elements));
+                } else if (Date.now() - startTime >= timeout) {
+                    reject(new Error(`Timeout waiting for ${selector}`));
+                } else {
+                    setTimeout(checkElements, 100);
+                }
+            };
 
-        checkElements();
-    }); 
+            checkElements();
+        }); 
+    } catch(error) {
+        console.error("Error in waitForElements:", error);
+    }
 };
 
 // for removing yt shorts fro the page
-const removeShorts = () => {
-    let shortelements = document.getElementsByClassName('ytd-rich-section-renderer');
-    for(let i = 0; i < shortelements.length; i++){
+var removeShorts = async (elements) => {
+    if(!elements){
+        // console.log("no elements passed , creating own elements");
+        elements = await waitForElements('ytd-rich-section-renderer');
+    }
+    try{
+        removeShortsCount++;
+        // let shortelements = document.getElementsByClassName('ytd-rich-section-renderer'); 
+        // shortelements = Array.from(shortelements);
+        // shortelements = shortelements.filter(shorties => !processedSections.has(shorties));
+        console.log("sectionrenderer elements : " , elements);
+        // if (shortelements.length === 0) return; 
+        // shortelements.forEach(shorties => processedSections.add(shorties));
 
-        //console.log("shorts[i] : " , shortelements[i]);
-        shortelements[i].style.display= 'none';
+        for(let i = 0; i < elements.length; i++){
+            // console.log("shorts[i] : " , shortelements[i]);
+            elements[i].style.display= 'none'; 
+        }
+        console.log(`removeShorts called ${removeShortsCount} times`); // Log counter
+    }catch(error){
+        console.error("Error in removeShorts:", error);
+    }
+};
+// Wait for both thumbnail and title to be available
+var waitForThumbnail = (element) => {
+    try{
+        return new Promise((resolve) => {
+            const checkThumbnail = () => {
+                const thumbnail = element.querySelector('ytd-thumbnail img');
+                if (thumbnail && thumbnail.src) {
+                    resolve(thumbnail);
+                } else {
+                    setTimeout(checkThumbnail, 100);
+                }
+            };
+            checkThumbnail();
+        });
+    }catch(error){
+        console.error("Error in waitForThumbnail:", error);
     }
 };
 
-// Wait for both thumbnail and title to be available
-const waitForThumbnail = (element) => {
-    return new Promise((resolve) => {
-        const checkThumbnail = () => {
-            const thumbnail = element.querySelector('ytd-thumbnail img');
-            if (thumbnail && thumbnail.src) {
-                resolve(thumbnail);
-            } else {
-                setTimeout(checkThumbnail, 100);
-            }
-        };
-        checkThumbnail();
-    });
-};
-
-const waitForTitle = (element)=>{
-    return new Promise((resolve) =>{
-        const checkTitle = () =>{
-            const title = element.querySelector('#video-title');
-            if(title){
-                resolve(title);
-            }else{
-                setTimeout(checkTitle , 100); 
-            }
-        };
-        checkTitle(); 
-    });
+var waitForTitle = (element)=>{
+    try{
+        return new Promise((resolve) =>{
+            const checkTitle = () => {
+                const title = element.querySelector('#video-title');
+                if(title){
+                    resolve(title);
+                }else{
+                    setTimeout(checkTitle , 100); 
+                }
+            };
+            checkTitle(); 
+        });
+    }catch(error){
+        console.error("Error in waitForTitle:", error);
+    }
 }
 
 // removing function for each element (that waits for thumbnails and titlte to load) and then remove every element passed through it
-const processElement = async (element) => {
+var processElement = async (element) => {
     try {
+        //!bakchodi :>
+        element.style.display = 'none'; 
+
         // Wait for thumbnail and title to load
-        const thumbnail = await waitForThumbnail(element);
-        const titleElement = await waitForTitle(element);
+        // const thumbnail = await waitForThumbnail(element);
+        // const titleElement = await waitForTitle(element);
 
-        // Process thumbnail
-        if (thumbnail) {
-            thumbnail.src = chrome.runtime.getURL('cross.png');
-        }
+        // // Process thumbnail
+        // if (thumbnail) {
+        //     thumbnail.src = chrome.runtime.getURL('cross.png');
+        // }
 
-        // Process title
-        if (titleElement) {
-            titleElement.innerHTML = 'not allowed to watch';
-        }
+        // // Process title
+        // if (titleElement) {
+        //     titleElement.innerHTML = 'not allowed to watch';
+        // }
 
-        // Disable interactions
-        element.style.pointerEvents = 'none';
+        // // Disable interactions
+        // element.style.pointerEvents = 'none';
 
     } catch (error) {
-        console.error("Error processing element:", error);
+        console.error("Error processing element function:", error);
     }
 };
 
-// Set up observer for new content
-const observer = new MutationObserver(async (mutations) => {
-    for (const mutation of mutations) {
-        if (mutation.addedNodes.length) {            
-            if (mutation.addedNodes.length > 0) {
-                //console.log("[contentscript.js]: New elements detected in observer :", mutation.addedNodes.length);
-                filterVideos(mutation.addedNodes); 
-            }
-        }
-    }
-});
-
-
 // Function to filter videos based on the search string
-const filterVideos = async (elements) => {
+var filterVideos = async (elements) => {
     try {
-        if (!userCategory) {
-            console.log("user category not configured");
+        filterVideosCount++; // Increment counter
+        if (!window.userCategory) {
+            console.log("search string not configured");
             return;
         }
+        console.log(`filterVideos called ${filterVideosCount} times`); // Log counter
+
         // for first call : 
         if(!elements || !Array.isArray(elements)){
             // console.log("no elements passed , creating own elements");
-            elements = await waitForElements('ytd-rich-item-renderer');
-        }
-
-        // Replace lazily loaded elements with their active counterparts
-        for (let i = 0; i < elements.length; i++) {
-            if (isLazilyLoaded(elements[i])) {
-                const activeElement = await getActiveElement(elements[i]);
-                if (activeElement) {
-                    elements[i] = activeElement; // Replace the lazy-loaded element
-                } else {
-                    elements.splice(i, 1); // Remove the element if no active counterpart is found
-                    i--; // Adjust the index after removal
-                }
-            }
+            elements = await waitForElements('YTD-RICH-ITEM-RENDERER');
         }
 
         // Filter out already processed elements
@@ -193,10 +271,8 @@ const filterVideos = async (elements) => {
 
         //elements only contains video titles (not shorts) ;
 
-        // console.log(elements);
+        console.log(elements);
         
-        // Remove Shorts first
-        removeShorts();
 
         try {
             // console.log("elements ;" , elements) ;
@@ -225,104 +301,44 @@ const filterVideos = async (elements) => {
             let i = 0 ;
             if (t_dash_vector) {
                 for(; i < elements.length; i++) {
-                    const titleElement = elements[i].querySelector("#video-title");
-                    if (!titleElement) continue;
+                    try{
+                        const titleElement = elements[i].querySelector("#video-title");
+                        if (!titleElement) continue;
+                        
+                        //? optimise this O(n) function: 
+                        const t_dash_item = t_dash_vector.find(item => 
+                            item.input_text === titleElement.textContent.trim()
+                        );
+                        if(!t_dash_item) continue;
+                        console.log("t_dash_item.predicted_label  , ",  t_dash_item.predicted_label , " string : " , window.userCategory) ; 
 
-                    // // Decode HTML entities in the video title
-                    // const decoder = document.createElement('div');
-                    // decoder.innerHTML = titleElement.innerHTML;
-                    // const video_title = decoder.textContent.trim();
-                    
-                    //? optimise this O(n) function: 
-                    const t_dash_item = t_dash_vector.find(item => 
-                        item.input_text === titleElement.textContent.trim()
-                    );
-                    console.log("t_dash_item.predicted_label  , ",  t_dash_item.predicted_label , " string : " , userCategory) ; 
+                        console.log("t_dash_item : ",  t_dash_item ) ; 
 
-                    console.log("elements i " , elements[i]); 
-
-                    if (t_dash_item && t_dash_item.predicted_label !== userCategory) {
-                        await processElement(elements[i]);
+                        if (t_dash_item && t_dash_item.predicted_label !== window.userCategory) {
+                            try{
+                                await processElement(elements[i]);
+                            }catch(error){
+                                console.error("Error in processElement:", error);
+                                continue;
+                            }
+                        }
+                    }catch(error){
+                        console.error("Error in filterContent , inside for loop:", error);
+                        continue;
                     }
+                    continue;
                 }
+                console.log("filtervideos for loop completed");
             }
-            // console.log("stopping at index : " , i); 
-
-
+            console.log("stopping at index : " , i); 
         } catch (error) {
             console.error("Error in filterContent:", error);
         }
-
-        // Start observing the content container
-        const contentContainer = document.querySelector('#content');
-        if (contentContainer) {
-            const config = {
-                childList: true, 
-                subtree: true
-            }; 
-
-            //config : childList -> watch for changes in direct children of content
-            //config : subTree -> watching for changes in sub tree of the childerns
-
-
-            observer.observe(contentContainer,config );
-            console.log("[contentscript.js]: Observer started");
-        }
-
-
-
-        
-
-        
-
-        // Clean up previous observer after 24 hours (or adjust as needed)
-        setTimeout(() => {
-            observer.disconnect();
-            console.log("[contentscript.js]: Observer disconnected");
-        }, 24 * 60 * 60 * 1000); // 24 hours
+        console.log(`filterVideos called ${filterVideosCount} times`); // Log counter
 
     } catch (error) {
         console.error("[contentscript.js] Error in filterVideos:", error);
     }
-};
-
-// Check if an element is lazily loaded
-const isLazilyLoaded = (element) => {
-    // Check for attributes or properties that indicate lazy loading
-    return element.hasAttribute('is-responsive-grid') || 
-            element.hasAttribute('is-shelf-item') ;
-};
-
-// Get the active, fully-loaded counterpart of a lazily loaded element
-const getActiveElement = async (element) => {
-    return new Promise((resolve) => {
-        const checkActive = () => {
-            // Get the title of the lazy-loaded element
-            const titleElement = element.querySelector('#video-title');
-            if (!titleElement) {
-                resolve(null); // No title found, skip this element
-                return;
-            }
-
-            const title = titleElement.textContent.trim();
-
-            // Find the active element with the same title
-            const activeElement = Array.from(document.querySelectorAll('ytd-rich-item-renderer'))
-                .find(el => {
-                    const activeTitleElement = el.querySelector('#video-title');
-                    return activeTitleElement && activeTitleElement.textContent.trim() === title;
-                });
-
-            if (activeElement && 
-                activeElement.querySelector('ytd-thumbnail img') && 
-                activeElement.querySelector('#video-title')) {
-                resolve(activeElement);
-            } else {
-                setTimeout(checkActive, 100);
-            }
-        };
-        checkActive();
-    });
 };
 
 console.log("[contentscript.js]: [contentscript.js.js]: script ended....");
