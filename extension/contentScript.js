@@ -40,15 +40,15 @@ function setupObserver() {
             });
 
             // Process collected nodes outside the mutations.forEach loop
-            if (collectedItemNodes.length > 25) {
-                console.log("[Observer] Processing video batch:", collectedItemNodes.length);
+            if (collectedItemNodes.length > 15) {
+                // console.log("[Observer] Processing video batch:", collectedItemNodes.length);
                 await filterVideos(collectedItemNodes);
                 // Clear processed nodes
                 collectedItemNodes = [];
             }
             
             if (collectedSectionNodes.length > 0) {
-                console.log("[Observer] Processing shorts:", collectedSectionNodes.length);
+                // console.log("[Observer] Processing shorts:", collectedSectionNodes.length);
                 await removeShorts(collectedSectionNodes);
                 // Clear processed nodes
                 collectedSectionNodes = [];
@@ -70,9 +70,11 @@ function setupObserver() {
     }
 }
 
+
 // Modify your message listener to use the setupObserver function
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     window.userCategory = message.searchString;
+
     console.log("[contentscript.js]: Message received:", message);
 
     if (!window.observerRunning) {
@@ -283,7 +285,7 @@ var filterVideos = async (elements) => {
             
             const tries = 3;
             let t_dash_vector = []; 
-            console.log("t_vector sent: ", t_vector);
+            // console.log("t_vector sent: ", t_vector);
             let n_try = 0;
             let apiresponse = false;
             //try 3 times for the filtering (server overload issues in gemini)
@@ -293,11 +295,11 @@ var filterVideos = async (elements) => {
                     apiresponse = true;
                 }
                 catch(error){
-                    console.log("error in sending data to bg failed , filterVideos function " , error);
+                    console.error("error in sending data to bg failed , filterVideos function " , error);
                 }
             }
             
-            console.log("t dash vector : " , t_dash_vector);
+            // console.log("t dash vector : " , t_dash_vector);
             let i = 0 ;
             if (t_dash_vector) {
                 for(; i < elements.length; i++) {
@@ -310,9 +312,9 @@ var filterVideos = async (elements) => {
                             item.input_text === titleElement.textContent.trim()
                         );
                         if(!t_dash_item) continue;
-                        console.log("t_dash_item.predicted_label  , ",  t_dash_item.predicted_label , " string : " , window.userCategory) ; 
+                        // console.log("t_dash_item.predicted_label  , ",  t_dash_item.predicted_label , " string : " , window.userCategory) ; 
 
-                        console.log("t_dash_item : ",  t_dash_item ) ; 
+                        // console.log("t_dash_item : ",  t_dash_item ) ; 
 
                         if (t_dash_item && t_dash_item.predicted_label !== window.userCategory) {
                             try{
@@ -328,13 +330,13 @@ var filterVideos = async (elements) => {
                     }
                     continue;
                 }
-                console.log("filtervideos for loop completed");
+                // console.log("filtervideos for loop completed");
             }
-            console.log("stopping at index : " , i); 
+            // console.log("stopping at index : " , i); 
         } catch (error) {
             console.error("Error in filterContent:", error);
         }
-        console.log(`filterVideos called ${filterVideosCount} times`); // Log counter
+        // console.log(`filterVideos called ${filterVideosCount} times`); // Log counter
 
     } catch (error) {
         console.error("[contentscript.js] Error in filterVideos:", error);
