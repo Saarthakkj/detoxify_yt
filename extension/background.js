@@ -31,11 +31,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     await initializeModel();
                 }
 
-                // Send the entire array of titles
                 const prompt = JSON.stringify(request.data);
+                console.log("[background.js] Prompt:", prompt);
                 const result = await genModel.generateContent(prompt);
                 const response = await result.response;
-                // ... existing code ...
                 let text = response.text();
 
                 // Remove Markdown code block formatting if present
@@ -43,20 +42,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     text = text.slice(7, -3).trim();
                 }
 
-                // Split the string into an array of categories
-                const categories = text
-                    .replace(/[\[\]"]/g, '') // Remove brackets and quotes
-                    .split(',') // Split by comma
-                    .map(category => category.trim()); // Trim whitespace
-
-                // Map the categories to the expected format
-                const t_dash_vector = request.data.map((item, index) => ({
-                    input_text: item.text,
-                    predicted_label: categories[index] || 'other' // Default to 'other' if no category
-                }));
-
-                console.log("[background.js] Inference successful:", t_dash_vector);
-                sendResponse(t_dash_vector);
+                try {
+                    // Parse the JSON response directly
+                    const parsedResponse = JSON.parse(text);
+                    console.log("[background.js] Parsed response:", parsedResponse);
+                    
+                    // Validate the response format
+                    if (Array.isArray(parsedResponse) && 
+                        parsedResponse.every(item => 
+                            item.hasOwnProperty('input_text') && 
+                            item.hasOwnProperty('predicted_label') &&
+                            (item.predicted_label === "true" || item.predicted_label === "false")
+                        )) {
+                        console.log("[background.js] Inference successful:", parsedResponse);
+                        sendResponse(parsedResponse);
+                    } else {
+                        throw new Error("Invalid response format");
+                    }
+                } catch (parseError) {
+                    console.error("[background.js] Error parsing model response:", parseError);
+                    console.error("[background.js] Raw response:", text);
+                    sendResponse([]);
+                }
 
             } catch (error) {
                 console.error("[background.js] Inference error:", error);
@@ -67,8 +74,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Keep the message channel open for sendResponse
     }
 });
-
-
 
 // Initialize on install and startup
 chrome.runtime.onStartup.addListener(initializeModel);

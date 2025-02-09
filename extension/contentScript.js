@@ -150,8 +150,10 @@ setTimeout(() => {
     }
 }, 24 * 60 * 60 * 1000);
 
-async function sendPostRequest(data) {
+async function sendPostRequest(titles , input) {
+
     try {
+        const data = {"titles" : titles ,"input" :  input};
         //console.log("Sending data to background.js:", data);
         // Send message to background.js and wait for response
         const t_dash_vector = await chrome.runtime.sendMessage({
@@ -276,23 +278,6 @@ var processElement = async (element) => {
         //!bakchodi :>
         element.style.display = 'none'; 
 
-        // Wait for thumbnail and title to load
-        // const thumbnail = await waitForThumbnail(element);
-        // const titleElement = await waitForTitle(element);
-
-        // // Process thumbnail
-        // if (thumbnail) {
-        //     thumbnail.src = chrome.runtime.getURL('cross.png');
-        // }
-
-        // // Process title
-        // if (titleElement) {
-        //     titleElement.innerHTML = 'not allowed to watch';
-        // }
-
-        // // Disable interactions
-        // element.style.pointerEvents = 'none';
-
     } catch (error) {
         console.error("Error processing element function:", error);
     }
@@ -341,7 +326,7 @@ var filterVideos = async (elements) => {
             //try 3 times for the filtering (server overload issues in gemini)
             while(n_try++ < tries && !apiresponse){
                 try{
-                    t_dash_vector  = await sendPostRequest(t_vector).then(data =>{return data});
+                    t_dash_vector  = await sendPostRequest(t_vector , window.userCategory).then(data =>{return data});
                     apiresponse = true;
                 }
                 catch(error){
@@ -366,9 +351,9 @@ var filterVideos = async (elements) => {
 
                         // console.log("t_dash_item : ",  t_dash_item ) ; 
 
-                        if (t_dash_item && t_dash_item.predicted_label !== window.userCategory) {
+                        if (t_dash_item && t_dash_item.predicted_label !== "true") {
                             try{
-                                await processElement(elements[i]);
+                                processElement(elements[i]);
                             }catch(error){
                                 console.error("Error in processElement:", error);
                                 continue;

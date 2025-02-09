@@ -12,12 +12,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             apiKeyContainer.style.display = 'block';
         }
 
-        // Restore saved category selection
+        // Restore saved category
         if (result.USER_CATEGORY) {
-            const savedCategory = document.querySelector(`input[value="${result.USER_CATEGORY}"]`);
-            if (savedCategory) {
-                savedCategory.checked = true;
-            }
+            document.getElementById('userCategory').value = result.USER_CATEGORY;
         }
     } catch (error) {
         console.error('[popup.js] Error loading saved data:', error);
@@ -26,16 +23,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Search button click handler
     const searchButton = document.getElementById("searchButton");
     searchButton.addEventListener("click", async () => {
-        const selectedCategory = document.querySelector('input[name="category"]:checked');
+        const categoryInput = document.getElementById('userCategory');
+        const category = categoryInput.value.trim();
         
-        if (!selectedCategory) {
-            alert('Please select a category');
+        if (!category) {
+            alert('Please enter a category');
             return;
         }
 
-        const category = selectedCategory.value;
-        
-        // Save the selected category
+        // Save the entered category
         try {
             await chrome.storage.sync.set({ USER_CATEGORY: category });
         } catch (error) {
