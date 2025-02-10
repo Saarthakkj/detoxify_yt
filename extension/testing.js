@@ -7,7 +7,7 @@ const gemini = process.env.GEMINI_GENERATIVE_LANGUAGE_CLIENT_API;
 const genai = new GoogleGenerativeAI(gemini);
 
 const genModel = genai.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash-lite-preview-02-05",
     systemInstruction: system_prompt
 });
 

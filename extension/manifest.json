@@ -2,6 +2,8 @@
   "name": "Detoxify",
   "version": "0.1.0",
   "description": "Filtering YT videos",
+  "author": "Saarthak Saxena",
+  "privacy_policy": "https://github.com/Saarthakkj/detoxify_yt/blob/main/PRIVACY.md",
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
