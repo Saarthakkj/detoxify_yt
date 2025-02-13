@@ -317,23 +317,6 @@ var processElement = async (element) => {
         //!bakchodi :>
         element.style.display = 'none'; 
 
-        // Wait for thumbnail and title to load
-        // const thumbnail = await waitForThumbnail(element);
-        // const titleElement = await waitForTitle(element);
-
-        // // Process thumbnail
-        // if (thumbnail) {
-        //     thumbnail.src = chrome.runtime.getURL('cross.png');
-        // }
-
-        // // Process title
-        // if (titleElement) {
-        //     titleElement.innerHTML = 'not allowed to watch';
-        // }
-
-        // // Disable interactions
-        // element.style.pointerEvents = 'none';
-
     } catch (error) {
         console.error("Error processing element function:", error);
     }
