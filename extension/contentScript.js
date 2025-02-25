@@ -4,6 +4,20 @@ document.requestStorageAccess().then(() => {
     console.error('Storage access denied');
 });
 
+// Add to your script
+function ensureObserverHealthy() {
+    if (!observer || !window.observerRunning) {
+        console.log(`[Detoxify Observer not running, restarting`);
+        window.observerRunning = true;
+        setupObserver();
+    }
+    else{
+        console.log(`[Detoxify  Observer is healthy`);
+    }
+}
+
+
+
 async function initializeWithSavedCategory() {
     try {
         const result = await chrome.storage.sync.get(['USER_CATEGORY', 'GEMINI_API_KEY']);
@@ -18,44 +32,20 @@ async function initializeWithSavedCategory() {
             }
             
             try {
-                // Handle initial shorts first
+                //? Handle initial shorts first
                 const initialShorts = await waitForElements('YTD-RICH-SECTION-RENDERER');
                 if (initialShorts && initialShorts.length > 0) {
                     console.log("[contentscript.js]: Removing initial shorts sections:", initialShorts.length);
                     await removeShorts(initialShorts);
                 }
 
-                // Get all initial videos
+                
+
+                //? no batch size for initial elements (after that observer logic will take care) : 
                 const allInitialElements = await waitForElements('YTD-RICH-ITEM-RENDERER');
                 if (allInitialElements && allInitialElements.length > 0) {
-                    console.log("[contentscript.js]: Found initial elements:", allInitialElements.length);
-                    
-                    // Add them to observer's collection for proper batching
-                    if (observer) {
-                        observer.collectedItemNodes.push(...allInitialElements);
-                        
-                        // Process complete batches of 15
-                        while (observer.collectedItemNodes.length >= 15) {
-                            const batchToProcess = observer.collectedItemNodes.splice(0, 15);
-                            console.log("[contentscript.js] Processing initial batch of 15");
-                            await filterVideos(batchToProcess);
-                        }
-                        
-                        // If any remaining items, set them up for delayed processing
-                        if (observer.collectedItemNodes.length > 0) {
-                            if (observer.processingTimeout) {
-                                clearTimeout(observer.processingTimeout);
-                            }
-                            observer.processingTimeout = setTimeout(async () => {
-                                if (observer.collectedItemNodes.length > 0) {
-                                    console.log("[contentscript.js] Processing remaining initial elements:", 
-                                        observer.collectedItemNodes.length);
-                                    await filterVideos(observer.collectedItemNodes);
-                                    observer.collectedItemNodes = [];
-                                }
-                            }, 1000);
-                        }
-                    }
+                    console.log("[contentscript.js]: Processing initial elements:", allInitialElements.length);
+                    await filterVideos(allInitialElements);
                 }
             } catch (error) {
                 console.error("[contentscript.js]: Error processing initial elements:", error);
@@ -70,17 +60,22 @@ async function initializeWithSavedCategory() {
 window.addEventListener('load', initializeWithSavedCategory);
 document.addEventListener('DOMContentLoaded', initializeWithSavedCategory);
 
-// Update the navigation observer to handle SPA
+// Store initial URL
 let lastUrl = location.href;
+
+// Create observer for YouTube's Single Page Application (SPA) navigation
 const navigationObserver = new MutationObserver(() => {
     const url = location.href;
     if (url !== lastUrl) {
+        // URL has changed
         lastUrl = url;
         console.log('[contentscript.js]: YouTube navigation detected, reinitializing...');
-        // Reset processed elements on navigation
+        
+        // Reset tracking sets for processed content
         processedElements = new WeakSet();
         processedSections = new WeakSet();
-        // Reinitialize
+        
+        // Reinitialize filtering
         initializeWithSavedCategory();
     }
 });
@@ -101,18 +96,24 @@ let observer = null;
 
 // Function to setup observer
 function setupObserver() {
+    console.log('reached inside setup observer');
     if (observer) {
+        console.log("observer already connected , so disconnecting it");
         observer.disconnect();
+
     }
+    console.log('observer endpoint 1');
 
     observer = new MutationObserver(async (mutations) => {
         try {
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
+                    // console.log('inside mutaitons' , mutations);
                     // Handle shorts immediately
                     if (node.tagName === 'YTD-RICH-SECTION-RENDERER' && !processedSections.has(node)) {
                         processedSections.add(node);
-                        await removeShorts([node]); // Process shorts immediately
+                        console.log("[Observer] Processing shorts section" , node);
+                        await removeShorts([node]); // Process sections immediately
                     }
                     
                     // Collect video nodes for batch processing
@@ -121,46 +122,36 @@ function setupObserver() {
                         
                         // Process when we have 15 or more videos
                         if (observer.collectedItemNodes.length >= 15) {
-                            const batchToProcess = observer.collectedItemNodes.splice(0, 15); // Take first 15
+                            const batchToProcess = observer.collectedItemNodes.splice(0, 15); // Take first 15 and remove them
+                            processedElements.add(batchToProcess);
                             console.log("[Observer] Processing video batch of 15");
-                            await filterVideos(batchToProcess);
+                            await filterVideos(batchToProcess);     
                         }
                     }
                 }
             }
-
-            // Clear existing timeout for remaining videos
-            if (observer.processingTimeout) {
-                clearTimeout(observer.processingTimeout);
-            }
-
-            // Process remaining videos after delay
-            if (observer.collectedItemNodes.length > 0) {
-                observer.processingTimeout = setTimeout(async () => {
-                    console.log("[Observer] Processing remaining videos:", observer.collectedItemNodes.length);
-                    await filterVideos(observer.collectedItemNodes);
-                    observer.collectedItemNodes = [];
-                }, 1000); // Wait 1 second before processing remaining videos
-            }
-
         } catch (error) {
             console.error("Error in MutationObserver callback:", error);
         }
     });
 
+    console.log("observer endpoint 2");
     // Add collections to observer instance
     observer.collectedItemNodes = [];
-    observer.processingTimeout = null;
 
     // Start observing
-    const contentContainer = document.querySelector('#contents');
-    if (contentContainer) {
+    const contentContainer = document.querySelector('#content');
+    if(contentContainer){
         observer.observe(contentContainer, {
             childList: true,
             subtree: true
         });
-        console.log("[contentscript.js]: Observer started");
     }
+    
+    console.log("[contentscript.js]: Observer started");
+    console.log("observer endpoint 3");
+    console.log("observer connected ? : " , observer);
+    setInterval(ensureObserverHealthy , 1000);
 }
 
 // Modify the message listener
@@ -174,6 +165,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "filter") {
         console.log("[contentscript.js]: Filter action received with string:", window.userCategory);
         if (!window.observerRunning) {
+            console.log("connecting observer"); 
             window.observerRunning = true;
             setupObserver();
         }
@@ -184,14 +176,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
 });
 
-// Clean up observer after 24 hours
-setTimeout(() => {
-    if (observer) {
-        observer.disconnect();
-        window.observerRunning = false;
-        console.log("[contentscript.js]: Observer disconnected after timeout");
-    }
-}, 24 * 60 * 60 * 1000);
+
+
+// setInterval(() => {
+//     const timestamp = new Date().toISOString().substr(11, 8);
+//     if (observer) {
+//         console.log(`[${timestamp}] Observer is connected (${Math.random().toString(36).substr(2, 5)})`);
+//     } else {
+//         console.log(`[${timestamp}] Observer is NOT connected (${Math.random().toString(36).substr(2, 5)})`);
+//     }
+// }, 1000);
+
 
 async function sendPostRequest(data) {
     try {
@@ -237,7 +232,8 @@ var waitForElements = (selector, timeout = 1000) => {
                 if (elements.length > 0) {
                     resolve(Array.from(elements));
                 } else if (Date.now() - startTime >= timeout) {
-                    reject(new Error(`Timeout waiting for ${selector}`));
+                    console.log(`timeout waiting for : ${selector}`)
+                    setTimeout(checkElements, 100);
                 } else {
                     setTimeout(checkElements, 100);
                 }
@@ -254,7 +250,7 @@ var waitForElements = (selector, timeout = 1000) => {
 var removeShorts = async (elements) => {
     if(!elements){
         // console.log("no elements passed , creating own elements");
-        elements = await waitForElements('ytd-rich-section-renderer');
+        elements = await waitForElements('YTD-RICH-SECTION-RENDERER');
     }
     try{
         removeShortsCount++;
@@ -314,9 +310,8 @@ var waitForTitle = (element)=>{
 // removing function for each element (that waits for thumbnails and titlte to load) and then remove every element passed through it
 var processElement = async (element) => {
     try {
-        //!bakchodi :>
+        //! THE line in code :>
         element.style.display = 'none'; 
-
     } catch (error) {
         console.error("Error processing element function:", error);
     }
