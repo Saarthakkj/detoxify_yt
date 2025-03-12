@@ -17,6 +17,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             const savedCategory = document.querySelector(`input[value="${result.USER_CATEGORY}"]`);
             if (savedCategory) {
                 savedCategory.checked = true;
+                // Update button text to indicate category can be changed
+                const searchButton = document.getElementById("searchButton");
+                searchButton.textContent = "Apply Filter";
             }
         }
     } catch (error) {
@@ -38,6 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Save the selected category
         try {
             await chrome.storage.sync.set({ USER_CATEGORY: category });
+            console.log('[popup.js] Category updated to:', category);
         } catch (error) {
             console.error('[popup.js] Error saving category:', error);
         }
@@ -50,10 +54,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             }, () => {
                 chrome.tabs.sendMessage(tabs[0].id, {
                     action: "filter", 
-                    searchString: category
+                    searchString: category,
+                    reinitializeObserver: true // Add flag to reinitialize observer
                 });
-                console.log("[popup.js]: Content script injected and message sent");
+                console.log("[popup.js]: Content script injected and message sent with reinitialize flag");
             });
+        });
+    });
+
+    // Add event listeners to radio buttons to enable the Apply Filter button
+    const categoryRadios = document.querySelectorAll('input[name="category"]');
+    categoryRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            searchButton.classList.add('active');
         });
     });
 

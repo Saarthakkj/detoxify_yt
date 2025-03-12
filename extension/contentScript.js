@@ -14,6 +14,9 @@ function ensureObserverHealthy() {
     else{
         console.log(`[Detoxify  Observer is healthy`);
     }
+
+    console.log("contents container : " , document.querySelector('#contents'));
+    console.log("content container : " , document.querySelector('#content'));
 }
 
 
@@ -39,8 +42,13 @@ async function initializeWithSavedCategory() {
                     await removeShorts(initialShorts);
                 }
 
-                
-
+                // //? Handle initial playlists first
+                // const playlists = await waitForElements('YTD-RICH-SECTION-RENDERER');
+                // if (initialShorts && initialShorts.length > 0) {
+                //     console.log("[contentscript.js]: Removing initial shorts sections:", initialShorts.length);
+                //     await removePlaylists(initialShorts);
+                // }
+            
                 //? no batch size for initial elements (after that observer logic will take care) : 
                 const allInitialElements = await waitForElements('YTD-RICH-ITEM-RENDERER');
                 if (allInitialElements && allInitialElements.length > 0) {
@@ -91,6 +99,8 @@ var processedSections = new WeakSet();
 // let userCategory = null;
 var processedElements = new WeakSet();
 
+var contentContainer = null ;
+
 // Initialize observer at the top level
 let observer = null;
 
@@ -140,7 +150,7 @@ function setupObserver() {
     observer.collectedItemNodes = [];
 
     // Start observing
-    const contentContainer = document.querySelector('#content');
+    contentContainer = document.querySelector('#content');
     if(contentContainer){
         observer.observe(contentContainer, {
             childList: true,
@@ -164,6 +174,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.action === "filter") {
         console.log("[contentscript.js]: Filter action received with string:", window.userCategory);
+        
+        // Check if we need to reinitialize the observer (category changed)
+        if (message.reinitializeObserver) {
+            console.log("[contentscript.js]: Reinitializing observer due to category change");
+            // Reset tracking sets for processed content
+            processedElements = new WeakSet();
+            processedSections = new WeakSet();
+            
+            // Disconnect existing observer if it exists
+            if (observer) {
+                observer.disconnect();
+                observer = null;
+            }
+            
+            window.observerRunning = false;
+        }
+        
         if (!window.observerRunning) {
             console.log("connecting observer"); 
             window.observerRunning = true;
@@ -212,6 +239,11 @@ var scrapperTitleVector = async (elements) => {
         let titleElement = el.querySelector("#video-title");
         if (titleElement) {
             return titleElement.textContent.trim();
+        }
+        else{
+            //for playlists
+            titleElement = el.innerHTML;
+            // if(titleElement) return titleElement.textContent.trim();
         }
         return null;
     });
