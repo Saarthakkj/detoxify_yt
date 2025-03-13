@@ -50,7 +50,7 @@ async function initializeWithSavedCategory() {
                     //? no batch size for initial elements (after that observer logic will take care) : 
                     const allInitialElements = await waitForElements('YTD-RICH-ITEM-RENDERER');
                     if (allInitialElements && allInitialElements.length > 0) {
-                        console.log("[contentscript.js]: Processing initial elements:", allInitialElements.length);
+                        //console.log("[contentscript.js]: Processing initial elements:", allInitialElements.length);
                         await filterVideos(allInitialElements);
                     }
                 } catch (error) {
@@ -434,7 +434,7 @@ var filterVideos = async (elements) => {
             elements = await waitForElements('YTD-RICH-ITEM-RENDERER');
         }
 
-        console.log("elements : ", elements);
+        // console.log("elements : ", elements);
 
         // Filter out already processed elements
         elements = elements.filter(el => !processedElements.has(el));
@@ -445,13 +445,13 @@ var filterVideos = async (elements) => {
 
         //elements only contains video titles (not shorts) ;
 
-        console.log("elements after filtering : ", elements);
+        // console.log("elements after filtering : ", elements);
         
 
         try {
             // console.log("elements ;" , elements) ;
             let titleVector = await scrapperTitleVector(elements);
-            console.log("title vector : ", titleVector);
+            // console.log("title vector : ", titleVector);
             let t_vector = titleVector.map((title) => ({ "text": title }));
             // console.log("api request sent....", t_vector);
 
