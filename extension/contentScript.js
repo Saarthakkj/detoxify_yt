@@ -20,40 +20,44 @@ function ensureObserverHealthy() {
 }
 async function initializeWithSavedCategory() {
     try {
-        const result = await chrome.storage.sync.get(['USER_CATEGORY', 'GEMINI_API_KEY']);
+        const result = await chrome.storage.sync.get(['USER_CATEGORY', 'GEMINI_API_KEY', 'FILTER_ENABLED', 'BATCH_SIZE']);
+        // Set default batch size if not set
+        window.batchSize = result.BATCH_SIZE || 15;
         if (result.USER_CATEGORY && result.GEMINI_API_KEY) {
             console.log("[contentscript.js]: Found saved category:", result.USER_CATEGORY);
             window.userCategory = result.USER_CATEGORY;
             
-            // Start observer immediately
-            if (!window.observerRunning) {
-                window.observerRunning = true;
-                setupObserver();
-            }
+            // Set filter enabled state (default to enabled if not set)
+            window.filterEnabled = result.FILTER_ENABLED !== false;
+            console.log("[contentscript.js]: Filter enabled state:", window.filterEnabled);
             
-            try {
-                //? Handle initial shorts first
-                const initialShorts = await waitForElements('YTD-RICH-SECTION-RENDERER');
-                if (initialShorts && initialShorts.length > 0) {
-                    console.log("[contentscript.js]: Removing initial shorts sections:", initialShorts.length);
-                    await removeShorts(initialShorts);
+            // Only start observer and process elements if filtering is enabled
+            if (window.filterEnabled) {
+                // Start observer immediately
+                if (!window.observerRunning) {
+                    window.observerRunning = true;
+                    setupObserver();
                 }
-
-                //? Handle initial grid renderers
-                // const initialGrids = await waitForElements('YTD-RICH-GRID-RENDERER');
-                // if (initialGrids && initialGrids.length > 0) {
-                //     console.log("[contentscript.js]: Removing initial grid renderers:", initialGrids.length);
-                //     await removeGrids(initialGrids);
-                // }
-            
-                //? no batch size for initial elements (after that observer logic will take care) : 
-                const allInitialElements = await waitForElements('YTD-RICH-ITEM-RENDERER');
-                if (allInitialElements && allInitialElements.length > 0) {
-                    console.log("[contentscript.js]: Processing initial elements:", allInitialElements.length);
-                    await filterVideos(allInitialElements);
+                
+                try {
+                    //? Handle initial shorts first
+                    const initialShorts = await waitForElements('YTD-RICH-SECTION-RENDERER');
+                    if (initialShorts && initialShorts.length > 0) {
+                        console.log("[contentscript.js]: Removing initial shorts sections:", initialShorts.length);
+                        await removeShorts(initialShorts);
+                    }
+                
+                    //? no batch size for initial elements (after that observer logic will take care) : 
+                    const allInitialElements = await waitForElements('YTD-RICH-ITEM-RENDERER');
+                    if (allInitialElements && allInitialElements.length > 0) {
+                        console.log("[contentscript.js]: Processing initial elements:", allInitialElements.length);
+                        await filterVideos(allInitialElements);
+                    }
+                } catch (error) {
+                    console.error("[contentscript.js]: Error processing initial elements:", error);
                 }
-            } catch (error) {
-                console.error("[contentscript.js]: Error processing initial elements:", error);
+            } else {
+                console.log("[contentscript.js]: Filtering is disabled, not starting observer");
             }
         }
     } catch (error) {
@@ -134,11 +138,11 @@ function setupObserver() {
                     if (node.tagName === 'YTD-RICH-ITEM-RENDERER' && !processedElements.has(node)) {
                         observer.collectedItemNodes.push(node);
                         
-                        // Process when we have 15 or more videos
-                        if (observer.collectedItemNodes.length >= 15) {
-                            const batchToProcess = observer.collectedItemNodes.splice(0, 15); // Take first 15 and remove them
+                        // Process when we have enough videos based on batch size setting
+                        if (observer.collectedItemNodes.length >= window.batchSize) {
+                            const batchToProcess = observer.collectedItemNodes.splice(0, window.batchSize); // Take batch and remove them
                             processedElements.add(batchToProcess);
-                            console.log("[Observer] Processing video batch of 15");
+                            console.log(`[Observer] Processing video batch of ${window.batchSize}`);
                             await filterVideos(batchToProcess);     
                         }
                     }
@@ -179,6 +183,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "filter") {
         console.log("[contentscript.js]: Filter action received with string:", window.userCategory);
         
+        // Store filter enabled state
+        window.filterEnabled = message.filterEnabled !== false;
+        console.log("[contentscript.js]: Filter enabled state:", window.filterEnabled);
+        
         // Check if we need to reinitialize the observer (category changed)
         if (message.reinitializeObserver) {
             console.log("[contentscript.js]: Reinitializing observer due to category change");
@@ -195,19 +203,84 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             window.observerRunning = false;
         }
         
-        if (!window.observerRunning) {
-            console.log("connecting observer"); 
-            window.observerRunning = true;
-            setupObserver();
+        // Only setup observer and filter if filtering is enabled
+        if (window.filterEnabled) {
+            if (!window.observerRunning) {
+                console.log("connecting observer"); 
+                window.observerRunning = true;
+                setupObserver();
+            }
+            removeShorts();
+            filterVideos();
+        } else {
+            // If filtering is disabled, disconnect observer
+            if (observer) {
+                console.log("[contentscript.js]: Disconnecting observer as filtering is disabled");
+                observer.disconnect();
+                observer = null;
+            }
+            window.observerRunning = false;
+            
+            // Show any hidden elements when filter is disabled
+            restoreHiddenElements();
         }
-        removeShorts();
-        filterVideos();
+        
+        sendResponse({status: "received"});
+    } else if (message.action === "updateFilterState") {
+        // Handle filter state updates without changing category
+        window.filterEnabled = message.filterEnabled;
+        console.log("[contentscript.js]: Filter state updated to:", window.filterEnabled);
+        
+        if (window.filterEnabled) {
+            // Re-enable filtering
+            if (!window.observerRunning) {
+                window.observerRunning = true;
+                setupObserver();
+            }
+            removeShorts();
+            filterVideos();
+        } else {
+            // Disable filtering
+            if (observer) {
+                observer.disconnect();
+                observer = null;
+            }
+            window.observerRunning = false;
+            restoreHiddenElements();
+        }
+        
+        sendResponse({status: "received"});
+    } else if (message.action === "updateBatchSize") {
+        // Handle batch size updates
+        window.batchSize = message.batchSize;
+        console.log("[contentscript.js]: Batch size updated to:", window.batchSize);
         sendResponse({status: "received"});
     }
     return true;
 });
 
 
+
+// Function to restore hidden elements when filter is disabled
+function restoreHiddenElements() {
+    console.log("[contentscript.js]: Restoring hidden elements");
+    
+    // Restore shorts sections
+    const shortsSections = document.getElementsByTagName('YTD-RICH-SECTION-RENDERER');
+    for (let i = 0; i < shortsSections.length; i++) {
+        shortsSections[i].style.display = '';
+    }
+    
+    // Restore video items
+    const videoItems = document.getElementsByTagName('YTD-RICH-ITEM-RENDERER');
+    for (let i = 0; i < videoItems.length; i++) {
+        videoItems[i].style.display = '';
+    }
+    
+    // Reset processed tracking
+    processedElements = new WeakSet();
+    processedSections = new WeakSet();
+}
 
 // setInterval(() => {
 //     const timestamp = new Date().toISOString().substr(11, 8);

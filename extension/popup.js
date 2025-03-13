@@ -1,8 +1,8 @@
 // This ensures the script runs after the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", async () => {
     try {
-        // Load saved API key and category
-        const result = await chrome.storage.sync.get(['GEMINI_API_KEY', 'USER_CATEGORY']);
+        // Load saved API key, category, filter state, and batch size
+        const result = await chrome.storage.sync.get(['GEMINI_API_KEY', 'USER_CATEGORY', 'FILTER_ENABLED', 'BATCH_SIZE']);
         
         // Handle API key visibility
         const apiKeyContainer = document.querySelector('.api-key-container');
@@ -22,9 +22,57 @@ document.addEventListener("DOMContentLoaded", async () => {
                 searchButton.textContent = "Apply Filter";
             }
         }
+
+        // Restore saved filter toggle state
+        const filterToggle = document.getElementById('filterToggle');
+        // Default to enabled if not set
+        filterToggle.checked = result.FILTER_ENABLED !== false;
+        
+        // Update toggle label based on state
+        updateToggleLabel(filterToggle.checked);
+        
+        // Restore saved batch size
+        const batchSizeSlider = document.getElementById('batchSizeSlider');
+        const batchSizeValue = document.getElementById('batchSizeValue');
+        // Default to 15 if not set
+        const savedBatchSize = result.BATCH_SIZE || 15;
+        batchSizeSlider.value = savedBatchSize;
+        batchSizeValue.textContent = savedBatchSize;
     } catch (error) {
         console.error('[popup.js] Error loading saved data:', error);
     }
+
+    // Function to update toggle label text
+    function updateToggleLabel(isEnabled) {
+        const toggleLabel = document.querySelector('.toggle-label');
+        toggleLabel.textContent = isEnabled ? 'Filter Enabled' : 'Filter Disabled';
+    }
+
+    // Filter toggle change handler
+    const filterToggle = document.getElementById('filterToggle');
+    filterToggle.addEventListener('change', async () => {
+        const isEnabled = filterToggle.checked;
+        
+        // Update the label
+        updateToggleLabel(isEnabled);
+        
+        // Save the toggle state
+        try {
+            await chrome.storage.sync.set({ FILTER_ENABLED: isEnabled });
+            console.log('[popup.js] Filter state updated to:', isEnabled);
+            
+            // Send message to content script to update filter state
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: "updateFilterState",
+                    filterEnabled: isEnabled
+                });
+                console.log("[popup.js]: Filter state message sent:", isEnabled);
+            });
+        } catch (error) {
+            console.error('[popup.js] Error saving filter state:', error);
+        }
+    });
 
     // Search button click handler
     const searchButton = document.getElementById("searchButton");
@@ -37,13 +85,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         const category = selectedCategory.value;
+        const isFilterEnabled = document.getElementById('filterToggle').checked;
         
-        // Save the selected category
+        // Save the selected category and filter state
         try {
-            await chrome.storage.sync.set({ USER_CATEGORY: category });
+            await chrome.storage.sync.set({ 
+                USER_CATEGORY: category,
+                FILTER_ENABLED: isFilterEnabled
+            });
             console.log('[popup.js] Category updated to:', category);
+            console.log('[popup.js] Filter state updated to:', isFilterEnabled);
         } catch (error) {
-            console.error('[popup.js] Error saving category:', error);
+            console.error('[popup.js] Error saving settings:', error);
         }
 
         // Query for active tab and execute content script
@@ -55,6 +108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 chrome.tabs.sendMessage(tabs[0].id, {
                     action: "filter", 
                     searchString: category,
+                    filterEnabled: isFilterEnabled,
                     reinitializeObserver: true // Add flag to reinitialize observer
                 });
                 console.log("[popup.js]: Content script injected and message sent with reinitialize flag");
@@ -68,6 +122,32 @@ document.addEventListener("DOMContentLoaded", async () => {
         radio.addEventListener('change', () => {
             searchButton.classList.add('active');
         });
+    });
+    
+    // Add event listener for batch size slider
+    const batchSizeSlider = document.getElementById('batchSizeSlider');
+    const batchSizeValue = document.getElementById('batchSizeValue');
+    
+    batchSizeSlider.addEventListener('input', async () => {
+        const batchSize = parseInt(batchSizeSlider.value);
+        batchSizeValue.textContent = batchSize;
+        
+        // Save the batch size to storage
+        try {
+            await chrome.storage.sync.set({ BATCH_SIZE: batchSize });
+            console.log('[popup.js] Batch size updated to:', batchSize);
+            
+            // Send message to content script to update batch size in real-time
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: "updateBatchSize",
+                    batchSize: batchSize
+                });
+                console.log("[popup.js]: Batch size message sent:", batchSize);
+            });
+        } catch (error) {
+            console.error('[popup.js] Error saving batch size:', error);
+        }
     });
 
     try {
