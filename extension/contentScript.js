@@ -12,15 +12,12 @@ function ensureObserverHealthy() {
         setupObserver();
     }
     else{
-        console.log(`[Detoxify  Observer is healthy`);
+        // console.log(`[Detoxify  Observer is healthy`);
     }
 
-    console.log("contents container : " , document.querySelector('#contents'));
-    console.log("content container : " , document.querySelector('#content'));
+    // console.log("contents container : " , document.querySelector('#contents'));
+    // console.log("content container : " , document.querySelector('#content'));
 }
-
-
-
 async function initializeWithSavedCategory() {
     try {
         const result = await chrome.storage.sync.get(['USER_CATEGORY', 'GEMINI_API_KEY']);
@@ -42,11 +39,11 @@ async function initializeWithSavedCategory() {
                     await removeShorts(initialShorts);
                 }
 
-                // //? Handle initial playlists first
-                // const playlists = await waitForElements('YTD-RICH-SECTION-RENDERER');
-                // if (initialShorts && initialShorts.length > 0) {
-                //     console.log("[contentscript.js]: Removing initial shorts sections:", initialShorts.length);
-                //     await removePlaylists(initialShorts);
+                //? Handle initial grid renderers
+                // const initialGrids = await waitForElements('YTD-RICH-GRID-RENDERER');
+                // if (initialGrids && initialGrids.length > 0) {
+                //     console.log("[contentscript.js]: Removing initial grid renderers:", initialGrids.length);
+                //     await removeGrids(initialGrids);
                 // }
             
                 //? no batch size for initial elements (after that observer logic will take care) : 
@@ -113,18 +110,25 @@ function setupObserver() {
 
     }
     console.log('observer endpoint 1');
-
+    
     observer = new MutationObserver(async (mutations) => {
         try {
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
                     // console.log('inside mutaitons' , mutations);
                     // Handle shorts immediately
-                    if (node.tagName === 'YTD-RICH-SECTION-RENDERER' && !processedSections.has(node)) {
+                    if (node.tagName === 'YTD-RICH-SECTION-RENDERER'  && !processedSections.has(node)) {
                         processedSections.add(node);
                         console.log("[Observer] Processing shorts section" , node);
                         await removeShorts([node]); // Process sections immediately
                     }
+                    
+                    // // Handle grid renderers immediately
+                    // if (node.tagName === 'YTD-RICH-GRID-RENDERER' && !processedSections.has(node)) {
+                    //     processedSections.add(node);
+                    //     console.log("[Observer] Processing grid renderer section" , node);
+                    //     await removeGrids([node]); // Process grid renderers immediately
+                    // }
                     
                     // Collect video nodes for batch processing
                     if (node.tagName === 'YTD-RICH-ITEM-RENDERER' && !processedElements.has(node)) {
@@ -241,9 +245,12 @@ var scrapperTitleVector = async (elements) => {
             return titleElement.textContent.trim();
         }
         else{
-            //for playlists
-            titleElement = el.innerHTML;
-            // if(titleElement) return titleElement.textContent.trim();
+            //for "mix" elements - playlists etc
+            let mixTitleElement = el.querySelector(".yt-core-attributed-string");
+            if (mixTitleElement) {
+                console.log(mixTitleElement) ;
+                return mixTitleElement.textContent.trim();
+            }
         }
         return null;
     });
@@ -283,6 +290,8 @@ var removeShorts = async (elements) => {
     if(!elements){
         // console.log("no elements passed , creating own elements");
         elements = await waitForElements('YTD-RICH-SECTION-RENDERER');
+        // const element2 = await waitForElements('YT-LOCKUP-VIEW-MODEL');
+        // elements = element1.concat(element2);
     }
     try{
         removeShortsCount++;
@@ -302,42 +311,29 @@ var removeShorts = async (elements) => {
         console.error("Error in removeShorts:", error);
     }
 };
-// Wait for both thumbnail and title to be available
-var waitForThumbnail = (element) => {
-    try{
-        return new Promise((resolve) => {
-            const checkThumbnail = () => {
-                const thumbnail = element.querySelector('ytd-thumbnail img');
-                if (thumbnail && thumbnail.src) {
-                    resolve(thumbnail);
-                } else {
-                    setTimeout(checkThumbnail, 100);
-                }
-            };
-            checkThumbnail();
-        });
-    }catch(error){
-        console.error("Error in waitForThumbnail:", error);
-    }
-};
 
-var waitForTitle = (element)=>{
-    try{
-        return new Promise((resolve) =>{
-            const checkTitle = () => {
-                const title = element.querySelector('#video-title');
-                if(title){
-                    resolve(title);
-                }else{
-                    setTimeout(checkTitle , 100); 
-                }
-            };
-            checkTitle(); 
-        });
-    }catch(error){
-        console.error("Error in waitForTitle:", error);
-    }
-}
+// // for removing grid renderers from the page
+// var removeGrids = async (elements) => {
+//     if(!elements){
+//         return ;
+//         // console.log("no elements passed , creating own elements");
+//         elements = await waitForElements('YTD-RICH-GRID-RENDERER');
+//     }
+//     try{
+//         // Track how many times this function is called
+//         window.removeGridsCount = (window.removeGridsCount || 0) + 1;
+        
+//         console.log("grid renderer elements : " , elements);
+        
+//         for(let i = 0; i < elements.length; i++){
+//             elements[i].style.display = 'none'; 
+//         }
+//         console.log(`removeGrids called ${window.removeGridsCount} times`); // Log counter
+//     }catch(error){
+//         console.error("Error in removeGrids:", error);
+//     }
+// };
+
 
 // removing function for each element (that waits for thumbnails and titlte to load) and then remove every element passed through it
 var processElement = async (element) => {
@@ -365,6 +361,8 @@ var filterVideos = async (elements) => {
             elements = await waitForElements('YTD-RICH-ITEM-RENDERER');
         }
 
+        console.log("elements : ", elements);
+
         // Filter out already processed elements
         elements = elements.filter(el => !processedElements.has(el));
         if (elements.length === 0) return; // Exit if no new elements
@@ -374,12 +372,13 @@ var filterVideos = async (elements) => {
 
         //elements only contains video titles (not shorts) ;
 
-        console.log(elements);
+        console.log("elements after filtering : ", elements);
         
 
         try {
             // console.log("elements ;" , elements) ;
             let titleVector = await scrapperTitleVector(elements);
+            console.log("title vector : ", titleVector);
             let t_vector = titleVector.map((title) => ({ "text": title }));
             // console.log("api request sent....", t_vector);
 
@@ -405,8 +404,12 @@ var filterVideos = async (elements) => {
             if (t_dash_vector) {
                 for(; i < elements.length; i++) {
                     try{
-                        const titleElement = elements[i].querySelector("#video-title");
-                        if (!titleElement) continue;
+                        var titleElement = elements[i].querySelector("#video-title");
+                        if (!titleElement) {
+                            //for MIX  , playlists etc
+                            titleElement = elements[i].querySelector(".yt-core-attributed-string")
+                        };
+                        if(!titleElement) continue;
                         
                         //? optimise this O(n) function: 
                         const t_dash_item = t_dash_vector.find(item => 
