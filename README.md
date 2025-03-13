@@ -3,23 +3,20 @@
 
 <img src="cover.png?v=2" width="100%" alt="Detoxify Logo">
 
-> Smart Content. Clear Categories. Better YouTube Feed.
+> Smart Content Filtering for a Better YouTube Experience
 
-Detoxify is an AI-powered Chrome extension and content classification system that declutters your YouTube feed by intelligently categorizing videos into Chess, Coding, Mathematics, and other categories using state-of-the-art BERT models.
+Detoxify is an AI-powered Chrome extension that intelligently filters your YouTube feed using Google's advanced Gemini AI model, providing a personalized and focused viewing experience.
 
 ## 📑 Table of Contents
 - [Quick Start](#-quick-start)
 - [Overview](#-overview)
 - [System Architecture](#-system-architecture)
 - [Features](#-features)
-- [Performance Metrics](#-performance-metrics)
-- [Technical Implementation](#-technical-implementation)
+- [Technical Details](#-technical-details)
 - [Workflow](#-workflow)
-- [Security](#-security)
-- [Future Enhancements](#-future-enhancements)
+- [Security & Privacy](#-security--privacy)
 - [Contributing](#-contributing)
 - [License](#-license)
-- [Acknowledgments](#-acknowledgments)
 - [Contact](#-contact)
 
 ## 🚀 Quick Start
@@ -37,107 +34,88 @@ cd detoxify_yt
 npm install
 ```
 
+3. **Configure Extension**
+- Add your Gemini API key
+- Set content preferences
+- Enable in Chrome
+
 ## 🎯 Overview
 
-Detoxify is a complete ecosystem that combines:
-- Chrome Extension for user interaction
-- FastAPI backend for processing
-- BERT model for classification
-- BrightData API for dataset generation
+Detoxify leverages Google's Gemini AI to provide:
+- Intelligent content filtering
+- Real-time video processing
+- Custom content preferences
+- Automatic shorts and news removal
 
 ## 🏗️ System Architecture
 
 ### 1. Chrome Extension (Frontend)
-- Real-time content scraping initiation
-- Dynamic video filtering based on classifications
+- Real-time content scraping
+- Dynamic video filtering
+- Batch processing (15 videos per batch)
+- Automatic shorts removal
 
-### 2. FastAPI Backend
-- High-performance API endpoints
-- Asynchronous processing
-- Token-based authentication
-- Real-time data handling
-
-### 3. BERT Classification Model
-- Fine-tuned on YouTube content
-- Multi-category classification
+### 2. Gemini API Integration
+- Model: gemini-2.0-flash-lite-preview-02-05
+- Average latency: 1.002s
 - Real-time inference capabilities
-
-### 4. BrightData Scraping API
-- Efficient data collection
-- High Quality Dataset-generation
+- Custom content filtering
 
 ## 🚀 Features
 
-- **Intelligent Classification**: BERT-powered content categorization
-- **High Accuracy**: 87.8% classification accuracy
-- **Processing**: Content filtering
-- **Three Categories**: Chess, Coding, Mathematics
+- **Smart Filtering**: Powered by Gemini AI
+- **Fast Processing**: ~1 second latency per batch (of 15 videos)
+- **Customizable**: User-defined content preferences
+- **Automatic**: Real-time content processing
+- **Efficient**: 15-video batch processing
+- **Shorts Removal**: Automatic YouTube shorts filtering
 
-## 📊 Performance Metrics
+## 🛠️ Technical Details
 
-### Model Performance
-- Overall Accuracy: 87.8%
-
-### ROC-AUC Scores
-- Chess: 0.976
-- Coding: 0.971
-- Mathematics: 0.949
-- Other: 0.941
-
-## 🛠️ Technical Implementation
-
-### Model Training Configuration
-```python
-training_args = TrainingArguments(
-    learning_rate=2e-5,
-    per_device_train_batch_size=16,
-    num_train_epochs=10,
-    warmup_ratio=0.1,
-    weight_decay=0.01
-)
-```
+### Performance Metrics
+- Average API Latency: 1.002s
+- Batch Processing: 15 videos
+- Real-time processing capability
 
 ### System Requirements
-- Python 3.8+
 - Chrome Browser (latest version)
-- Internet connection for API access
+- Internet connection
+- Gemini API key
 
 ### Core Dependencies
-```
-fastapi==0.104.1
-uvicorn==0.23.2
-pydantic>=2.0.0
-transformers>=4.30.0
-torch>=2.0.0
-python-dotenv==1.0.1
-requests>=2.31.0
+```json
+{
+  "dependencies": {
+    "@google/generative-ai": "^0.2.0",
+    "chrome-types": "^0.1.246"
+  }
+}
 ```
 
 ## 🔄 Workflow
 
-1. **User Interaction**
+1. **Initial Setup**
    - Install Chrome extension
-   - Select content category
+   - Configure Gemini API key
+   - Set content preferences
 
-2. **Data Processing**
-   - Backend processes incoming data
-   - BERT model classifies content
+2. **Content Processing**
+   - Collects videos in batches of 15
+   - Sends to Gemini API for analysis
+   - Filters based on preferences
 
-3. **Content Filtering**
-   - Relevant videos are displayed
-   - Non-matching content is hidden
+3. **Real-time Updates**
+   - Processes new content automatically
+   - Removes YouTube shorts
+   - Updates feed instantly
 
-## 🔒 Security
+## 🔒 Security & Privacy
 
-- Token-based API authentication
-- Secure data transmission
-- Protected model endpoints
-
-## 🔮 Future Enhancements
-
-- Implementing faster models
-- Better UI/UX for extension
-- Additional content categories
+- Secure API key storage using Chrome Storage API
+- HTTPS-only communication
+- Client-side processing
+- No data collection or storage
+- See our [Privacy Policy](PRIVACY.md) for details
 
 ## 🤝 Contributing
 
@@ -151,13 +129,6 @@ requests>=2.31.0
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
 
-## 🙏 Acknowledgments
-
-- BrightData API for YouTube content scraping
-- FastAPI team for the web framework
-- Hugging Face for transformer models
-- Render for deploying
-
 ## 📧 Contact
 
 Prakhar Agrawal 
@@ -168,9 +139,6 @@ Saarthak Saxena
 - Email: saarthaksaxena7@gmail.com
 
 Project: [GitHub Repository](https://github.com/Saarthakkj/detoxify_yt)
-
-![Roadmap](roadmap.png)
-
 
 ---
 <p align="center">Made with ❤️ for a cleaner YouTube experience</p>

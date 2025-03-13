@@ -1,6 +1,6 @@
 {
   "name": "Detoxify",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Filtering YT videos",
   "author": "Saarthak Saxena",
   "privacy_policy": "https://github.com/Saarthakkj/detoxify_yt/blob/main/PRIVACY.md",
@@ -14,7 +14,9 @@
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/*",
-    "*://*/*"
+    "*://*.youtube.com/*",
+    "*://*.youtu.be/*" ,
+    "*://*.googlevideo.com/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -22,19 +24,15 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],
-      "js": ["contentScript.js"],
+      "matches": ["*://*.youtube.com/*"],  
+      "js": ["contentScript.js"] , 
       "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "popup.css", 
-        "popup.js", 
-        "cross.png"
-      ],
-      "matches": ["https://*.youtube.com/*"]
+      "matches": ["https://*.youtube.com/*"],  
+      "resources": ["popup.css", "popup.js", "cross.png"]
     }
   ],
   "action": {
