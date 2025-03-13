@@ -1,28 +1,63 @@
+document.requestStorageAccess().then(() => {
+    console.log("Access granted");
+}).catch(() => {
+    console.error('Storage access denied');
+});
+
+// Add to your script
+function ensureObserverHealthy() {
+    if (!observer || !window.observerRunning) {
+        console.log(`[Detoxify Observer not running, restarting`);
+        window.observerRunning = true;
+        setupObserver();
+    }
+    else{
+        // console.log(`[Detoxify  Observer is healthy`);
+    }
+
+    // console.log("contents container : " , document.querySelector('#contents'));
+    // console.log("content container : " , document.querySelector('#content'));
+}
 async function initializeWithSavedCategory() {
     try {
-        const result = await chrome.storage.sync.get(['USER_CATEGORY', 'GEMINI_API_KEY']);
+        const result = await chrome.storage.sync.get(['USER_CATEGORY', 'GEMINI_API_KEY', 'FILTER_ENABLED', 'BATCH_SIZE']);
+        // Set default batch size if not set
+        window.batchSize = result.BATCH_SIZE || 15;
         if (result.USER_CATEGORY && result.GEMINI_API_KEY) {
             console.log("[contentscript.js]: Found saved category:", result.USER_CATEGORY);
             window.userCategory = result.USER_CATEGORY;
             
-            // Start observer immediately if we have the category
-            if (!window.observerRunning) {
-                window.observerRunning = true;
-                setupObserver();
-            }
+            // Set filter enabled state (default to enabled if not set)
+            window.filterEnabled = result.FILTER_ENABLED !== false;
+            console.log("[contentscript.js]: Filter enabled state:", window.filterEnabled);
             
-            // Get initial elements on the page
-            const initialElements = await waitForElements('YTD-RICH-ITEM-RENDERER');
-            if (initialElements && initialElements.length > 0) {
-                console.log("[contentscript.js]: Found initial elements, starting filtering...");
-                await filterVideos(initialElements);
-            }
-
-            // Handle initial shorts
-            const initialShorts = await waitForElements('YTD-RICH-SECTION-RENDERER');
-            if (initialShorts && initialShorts.length > 0) {
-                console.log("[contentscript.js]: Found initial shorts, removing...");
-                await removeShorts(initialShorts);
+            // Only start observer and process elements if filtering is enabled
+            if (window.filterEnabled) {
+                // Start observer immediately
+                if (!window.observerRunning) {
+                    window.observerRunning = true;
+                    setupObserver();
+                }
+                
+                try {
+                    //? Handle initial shorts first
+                    const initialShorts = await waitForElements('YTD-RICH-SECTION-RENDERER');
+                    if (initialShorts && initialShorts.length > 0) {
+                        console.log("[contentscript.js]: Removing initial shorts sections:", initialShorts.length);
+                        await removeShorts(initialShorts);
+                    }
+                
+                    //? no batch size for initial elements (after that observer logic will take care) : 
+                    const allInitialElements = await waitForElements('YTD-RICH-ITEM-RENDERER');
+                    if (allInitialElements && allInitialElements.length > 0) {
+                        console.log("[contentscript.js]: Processing initial elements:", allInitialElements.length);
+                        await filterVideos(allInitialElements);
+                    }
+                } catch (error) {
+                    console.error("[contentscript.js]: Error processing initial elements:", error);
+                }
+            } else {
+                console.log("[contentscript.js]: Filtering is disabled, not starting observer");
             }
         }
     } catch (error) {
@@ -30,28 +65,32 @@ async function initializeWithSavedCategory() {
     }
 }
 
-// Add this to ensure the script runs when YouTube loads initially
+// Add both event listeners for initialization
 window.addEventListener('load', initializeWithSavedCategory);
-
-// Keep the DOMContentLoaded listener for redundancy
 document.addEventListener('DOMContentLoaded', initializeWithSavedCategory);
 
-// Also call it when YouTube's navigation occurs (for SPA navigation)
+// Store initial URL
 let lastUrl = location.href;
-new MutationObserver(() => {
+
+// Create observer for YouTube's Single Page Application (SPA) navigation
+const navigationObserver = new MutationObserver(() => {
     const url = location.href;
     if (url !== lastUrl) {
+        // URL has changed
         lastUrl = url;
         console.log('[contentscript.js]: YouTube navigation detected, reinitializing...');
+        
+        // Reset tracking sets for processed content
+        processedElements = new WeakSet();
+        processedSections = new WeakSet();
+        
+        // Reinitialize filtering
         initializeWithSavedCategory();
     }
-}).observe(document, { subtree: true, childList: true });
-
-document.requestStorageAccess().then(() => {
-    console.log("Access granted");
-}).catch(() => {
-    console.error('Storage access denied');
 });
+
+// Start observing for navigation changes
+navigationObserver.observe(document, { subtree: true, childList: true });
 
 // Initialize counters
 var removeShortsCount = 0;
@@ -61,64 +100,77 @@ var processedSections = new WeakSet();
 // let userCategory = null;
 var processedElements = new WeakSet();
 
+var contentContainer = null ;
 
 // Initialize observer at the top level
 let observer = null;
 
 // Function to setup observer
 function setupObserver() {
+    console.log('reached inside setup observer');
     if (observer) {
+        console.log("observer already connected , so disconnecting it");
         observer.disconnect();
+
     }
-
-    let collectedItemNodes = [];
-    let collectedSectionNodes = [];
-
+    console.log('observer endpoint 1');
+    
     observer = new MutationObserver(async (mutations) => {
         try {
-            mutations.forEach(function(mutation) {
-                // Collect nodes from this mutation
-                mutation.addedNodes.forEach(function(node) {
-                    if (node.tagName === 'YTD-RICH-ITEM-RENDERER') {
-                        collectedItemNodes.push(node);
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    // console.log('inside mutaitons' , mutations);
+                    // Handle shorts immediately
+                    if (node.tagName === 'YTD-RICH-SECTION-RENDERER'  && !processedSections.has(node)) {
+                        processedSections.add(node);
+                        console.log("[Observer] Processing shorts section" , node);
+                        await removeShorts([node]); // Process sections immediately
                     }
-                    if (node.tagName === 'YTD-RICH-SECTION-RENDERER') {
-                        collectedSectionNodes.push(node);
+                    
+                    // // Handle grid renderers immediately
+                    // if (node.tagName === 'YTD-RICH-GRID-RENDERER' && !processedSections.has(node)) {
+                    //     processedSections.add(node);
+                    //     console.log("[Observer] Processing grid renderer section" , node);
+                    //     await removeGrids([node]); // Process grid renderers immediately
+                    // }
+                    
+                    // Collect video nodes for batch processing
+                    if (node.tagName === 'YTD-RICH-ITEM-RENDERER' && !processedElements.has(node)) {
+                        observer.collectedItemNodes.push(node);
+                        
+                        // Process when we have enough videos based on batch size setting
+                        if (observer.collectedItemNodes.length >= window.batchSize) {
+                            const batchToProcess = observer.collectedItemNodes.splice(0, window.batchSize); // Take batch and remove them
+                            processedElements.add(batchToProcess);
+                            console.log(`[Observer] Processing video batch of ${window.batchSize}`);
+                            await filterVideos(batchToProcess);     
+                        }
                     }
-                });
-            });
-
-            // Process collected nodes outside the mutations.forEach loop
-            if (collectedItemNodes.length > 15) {
-                // console.log("[Observer] Processing video batch:", collectedItemNodes.length);
-                await filterVideos(collectedItemNodes);
-                // Clear processed nodes
-                collectedItemNodes = [];
+                }
             }
-            
-            if (collectedSectionNodes.length > 0) {
-                // console.log("[Observer] Processing shorts:", collectedSectionNodes.length);
-                await removeShorts(collectedSectionNodes);
-                // Clear processed nodes
-                collectedSectionNodes = [];
-            }
- 
         } catch (error) {
             console.error("Error in MutationObserver callback:", error);
         }
     });
 
+    console.log("observer endpoint 2");
+    // Add collections to observer instance
+    observer.collectedItemNodes = [];
+
     // Start observing
-    const contentContainer = document.querySelector('#contents');
-    if (contentContainer) {
+    contentContainer = document.querySelector('#content');
+    if(contentContainer){
         observer.observe(contentContainer, {
             childList: true,
             subtree: true
         });
-        console.log("[contentscript.js]: Observer started");
     }
+    
+    console.log("[contentscript.js]: Observer started");
+    console.log("observer endpoint 3");
+    console.log("observer connected ? : " , observer);
+    setInterval(ensureObserverHealthy , 1000);
 }
-
 
 // Modify the message listener
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -130,38 +182,127 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.action === "filter") {
         console.log("[contentscript.js]: Filter action received with string:", window.userCategory);
-        if (!window.observerRunning) {
-            window.observerRunning = true;
-            setupObserver();
+        
+        // Store filter enabled state
+        window.filterEnabled = message.filterEnabled !== false;
+        console.log("[contentscript.js]: Filter enabled state:", window.filterEnabled);
+        
+        // Check if we need to reinitialize the observer (category changed)
+        if (message.reinitializeObserver) {
+            console.log("[contentscript.js]: Reinitializing observer due to category change");
+            // Reset tracking sets for processed content
+            processedElements = new WeakSet();
+            processedSections = new WeakSet();
+            
+            // Disconnect existing observer if it exists
+            if (observer) {
+                observer.disconnect();
+                observer = null;
+            }
+            
+            window.observerRunning = false;
         }
-        removeShorts();
-        filterVideos();
+        
+        // Only setup observer and filter if filtering is enabled
+        if (window.filterEnabled) {
+            if (!window.observerRunning) {
+                console.log("connecting observer"); 
+                window.observerRunning = true;
+                setupObserver();
+            }
+            removeShorts();
+            filterVideos();
+        } else {
+            // If filtering is disabled, disconnect observer
+            if (observer) {
+                console.log("[contentscript.js]: Disconnecting observer as filtering is disabled");
+                observer.disconnect();
+                observer = null;
+            }
+            window.observerRunning = false;
+            
+            // Show any hidden elements when filter is disabled
+            restoreHiddenElements();
+        }
+        
+        sendResponse({status: "received"});
+    } else if (message.action === "updateFilterState") {
+        // Handle filter state updates without changing category
+        window.filterEnabled = message.filterEnabled;
+        console.log("[contentscript.js]: Filter state updated to:", window.filterEnabled);
+        
+        if (window.filterEnabled) {
+            // Re-enable filtering
+            if (!window.observerRunning) {
+                window.observerRunning = true;
+                setupObserver();
+            }
+            removeShorts();
+            filterVideos();
+        } else {
+            // Disable filtering
+            if (observer) {
+                observer.disconnect();
+                observer = null;
+            }
+            window.observerRunning = false;
+            restoreHiddenElements();
+        }
+        
+        sendResponse({status: "received"});
+    } else if (message.action === "updateBatchSize") {
+        // Handle batch size updates
+        window.batchSize = message.batchSize;
+        console.log("[contentscript.js]: Batch size updated to:", window.batchSize);
         sendResponse({status: "received"});
     }
     return true;
 });
 
-// Clean up observer after 24 hours
-setTimeout(() => {
-    if (observer) {
-        observer.disconnect();
-        window.observerRunning = false;
-        console.log("[contentscript.js]: Observer disconnected after timeout");
+
+
+// Function to restore hidden elements when filter is disabled
+function restoreHiddenElements() {
+    console.log("[contentscript.js]: Restoring hidden elements");
+    
+    // Restore shorts sections
+    const shortsSections = document.getElementsByTagName('YTD-RICH-SECTION-RENDERER');
+    for (let i = 0; i < shortsSections.length; i++) {
+        shortsSections[i].style.display = '';
     }
-}, 24 * 60 * 60 * 1000);
+    
+    // Restore video items
+    const videoItems = document.getElementsByTagName('YTD-RICH-ITEM-RENDERER');
+    for (let i = 0; i < videoItems.length; i++) {
+        videoItems[i].style.display = '';
+    }
+    
+    // Reset processed tracking
+    processedElements = new WeakSet();
+    processedSections = new WeakSet();
+}
+
+// setInterval(() => {
+//     const timestamp = new Date().toISOString().substr(11, 8);
+//     if (observer) {
+//         console.log(`[${timestamp}] Observer is connected (${Math.random().toString(36).substr(2, 5)})`);
+//     } else {
+//         console.log(`[${timestamp}] Observer is NOT connected (${Math.random().toString(36).substr(2, 5)})`);
+//     }
+// }, 1000);
+
 
 async function sendPostRequest(titles , input) {
 
     try {
-        const data = {"titles" : titles ,"input" :  input};
-        //console.log("Sending data to background.js:", data);
+        console.log("Sending data to background.js:", data);
         // Send message to background.js and wait for response
         const t_dash_vector = await chrome.runtime.sendMessage({
             type: "fetchInference",
             data: data
         });
 
-        //console.log("Received response from background.js:", t_dash_vector);
+        console.log("Received response from background.js:", t_dash_vector);
         return t_dash_vector; // Directly return the array
     } catch (error) {
         console.error("Error in sendPostRequest:", error);
@@ -177,6 +318,14 @@ var scrapperTitleVector = async (elements) => {
         if (titleElement) {
             return titleElement.textContent.trim();
         }
+        else{
+            //for "mix" elements - playlists etc
+            let mixTitleElement = el.querySelector(".yt-core-attributed-string");
+            if (mixTitleElement) {
+                console.log(mixTitleElement) ;
+                return mixTitleElement.textContent.trim();
+            }
+        }
         return null;
     });
 
@@ -184,8 +333,6 @@ var scrapperTitleVector = async (elements) => {
     
     return filteredArray;
 };
-
-
 
 // Add this helper function for waiting for elements to load
 var waitForElements = (selector, timeout = 1000) => {
@@ -198,7 +345,8 @@ var waitForElements = (selector, timeout = 1000) => {
                 if (elements.length > 0) {
                     resolve(Array.from(elements));
                 } else if (Date.now() - startTime >= timeout) {
-                    reject(new Error(`Timeout waiting for ${selector}`));
+                    console.log(`timeout waiting for : ${selector}`)
+                    setTimeout(checkElements, 100);
                 } else {
                     setTimeout(checkElements, 100);
                 }
@@ -215,7 +363,9 @@ var waitForElements = (selector, timeout = 1000) => {
 var removeShorts = async (elements) => {
     if(!elements){
         // console.log("no elements passed , creating own elements");
-        elements = await waitForElements('ytd-rich-section-renderer');
+        elements = await waitForElements('YTD-RICH-SECTION-RENDERER');
+        // const element2 = await waitForElements('YT-LOCKUP-VIEW-MODEL');
+        // elements = element1.concat(element2);
     }
     try{
         removeShortsCount++;
@@ -235,49 +385,35 @@ var removeShorts = async (elements) => {
         console.error("Error in removeShorts:", error);
     }
 };
-// Wait for both thumbnail and title to be available
-var waitForThumbnail = (element) => {
-    try{
-        return new Promise((resolve) => {
-            const checkThumbnail = () => {
-                const thumbnail = element.querySelector('ytd-thumbnail img');
-                if (thumbnail && thumbnail.src) {
-                    resolve(thumbnail);
-                } else {
-                    setTimeout(checkThumbnail, 100);
-                }
-            };
-            checkThumbnail();
-        });
-    }catch(error){
-        console.error("Error in waitForThumbnail:", error);
-    }
-};
 
-var waitForTitle = (element)=>{
-    try{
-        return new Promise((resolve) =>{
-            const checkTitle = () => {
-                const title = element.querySelector('#video-title');
-                if(title){
-                    resolve(title);
-                }else{
-                    setTimeout(checkTitle , 100); 
-                }
-            };
-            checkTitle(); 
-        });
-    }catch(error){
-        console.error("Error in waitForTitle:", error);
-    }
-}
+// // for removing grid renderers from the page
+// var removeGrids = async (elements) => {
+//     if(!elements){
+//         return ;
+//         // console.log("no elements passed , creating own elements");
+//         elements = await waitForElements('YTD-RICH-GRID-RENDERER');
+//     }
+//     try{
+//         // Track how many times this function is called
+//         window.removeGridsCount = (window.removeGridsCount || 0) + 1;
+        
+//         console.log("grid renderer elements : " , elements);
+        
+//         for(let i = 0; i < elements.length; i++){
+//             elements[i].style.display = 'none'; 
+//         }
+//         console.log(`removeGrids called ${window.removeGridsCount} times`); // Log counter
+//     }catch(error){
+//         console.error("Error in removeGrids:", error);
+//     }
+// };
+
 
 // removing function for each element (that waits for thumbnails and titlte to load) and then remove every element passed through it
 var processElement = async (element) => {
     try {
-        //!bakchodi :>
+        //! THE line in code :>
         element.style.display = 'none'; 
-
     } catch (error) {
         console.error("Error processing element function:", error);
     }
@@ -299,6 +435,8 @@ var filterVideos = async (elements) => {
             elements = await waitForElements('YTD-RICH-ITEM-RENDERER');
         }
 
+        console.log("elements : ", elements);
+
         // Filter out already processed elements
         elements = elements.filter(el => !processedElements.has(el));
         if (elements.length === 0) return; // Exit if no new elements
@@ -308,12 +446,13 @@ var filterVideos = async (elements) => {
 
         //elements only contains video titles (not shorts) ;
 
-        console.log(elements);
+        console.log("elements after filtering : ", elements);
         
 
         try {
             // console.log("elements ;" , elements) ;
             let titleVector = await scrapperTitleVector(elements);
+            console.log("title vector : ", titleVector);
             let t_vector = titleVector.map((title) => ({ "text": title }));
             // console.log("api request sent....", t_vector);
 
@@ -339,8 +478,12 @@ var filterVideos = async (elements) => {
             if (t_dash_vector) {
                 for(; i < elements.length; i++) {
                     try{
-                        const titleElement = elements[i].querySelector("#video-title");
-                        if (!titleElement) continue;
+                        var titleElement = elements[i].querySelector("#video-title");
+                        if (!titleElement) {
+                            //for MIX  , playlists etc
+                            titleElement = elements[i].querySelector(".yt-core-attributed-string")
+                        };
+                        if(!titleElement) continue;
                         
                         //? optimise this O(n) function: 
                         const t_dash_item = t_dash_vector.find(item => 
