@@ -293,8 +293,12 @@ function restoreHiddenElements() {
 
 
 async function sendPostRequest(titles , input) {
-
     try {
+        // console.log("these are titles " , titles , "input : " , input);
+        let data = {
+            titles: titles,
+            input: input
+        };
         console.log("Sending data to background.js:", data);
         // Send message to background.js and wait for response
         const t_dash_vector = await chrome.runtime.sendMessage({
@@ -435,7 +439,7 @@ var filterVideos = async (elements) => {
             elements = await waitForElements('YTD-RICH-ITEM-RENDERER');
         }
 
-        console.log("elements : ", elements);
+        // console.log("elements : ", elements);
 
         // Filter out already processed elements
         elements = elements.filter(el => !processedElements.has(el));
@@ -446,7 +450,7 @@ var filterVideos = async (elements) => {
 
         //elements only contains video titles (not shorts) ;
 
-        console.log("elements after filtering : ", elements);
+        // console.log("elements after filtering : ", elements);
         
 
         try {
@@ -454,7 +458,7 @@ var filterVideos = async (elements) => {
             let titleVector = await scrapperTitleVector(elements);
             console.log("title vector : ", titleVector);
             let t_vector = titleVector.map((title) => ({ "text": title }));
-            // console.log("api request sent....", t_vector);
+            console.log("api request sent....", t_vector);
 
             
             const tries = 3;
