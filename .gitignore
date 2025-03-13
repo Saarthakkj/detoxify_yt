@@ -65,3 +65,16 @@ node_modules/
 /extension/node_modules/
 /extension/.env
 /learning/
+/backend/
+/dataset/
+/devops/
+/model/
+.dockerignore
+.gitattributes
+.vercelignore
+docker-compose.yml
+docker-compose.yaml
+extension.zip
+pre_processing.py
+runtime.txt
+sample_response.json
