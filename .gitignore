@@ -1,81 +1,40 @@
-client_secret.json
-secrets.json
-US_youtube_trending_data.csv.zip
-USvideos.csv.zip
-virtual/
-main_response.json
-sample_response.json
-US_youtube_trending_data.csv
-USvideos.csv
+# Dependencies
+node_modules/
+/extension/node_modules/
 
-filtered_data.csv
-filtered_data1.csv
-sample_response.json
-bert-yt_classifier/
-
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual Environment
-venv/
-ENV/
+# Environment files
 .env
+.env.*
+/extension/.env
 
-# IDE
+# Build files
+dist/
+build/
+extension.zip
+
+# IDE and Editor files
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# Jupyter Notebook
-.ipynb_checkpoints/
-bert-yt_classifier/
-title_keyword_pairs.csv
-title_keyword_pairs.txt
-.vercel
+# OS files
+.DS_Store
+Thumbs.db
 
-# Environment variables
-.env
-.env.*
-last_response.json
-sample_response.json
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
 
-model/wiki.en/
-node_modules/
-/extension/node_modules/
-/extension/.env
-learning/
-backend
-dataset/
-devops
-model/
-.dockerignore
-.gitattributes
-.vercelignore
-docker-compose.yml
-docker-compose.yaml
-extension.zip
-pre_processing.py
-runtime.txt
-sample_response.json
-/.venv/
+# Logs
+*.log
+
+# Keep only extension folder
+/*
+!/extension/
+!/README.md
+!/LICENSE
+!/CONTRIBUTING.MD
+!/CODE_OF_CONDUCT.md
+!/PRIVACY.md
