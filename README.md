@@ -25,9 +25,28 @@ Detoxify is an AI-powered Chrome extension that intelligently filters your YouTu
 
 1. **Clone the Repository**
 ```bash
-git clone https://github.com/Saarthakkj/detoxify_yt.git
+git clone https://github.com/Saarthakkj/detoxify_yt.git -b custom_input
 cd detoxify_yt
 ```
+
+2. **Load the Extension in Chrome**
+```bash
+# No build step required for unpacked extension
+```
+- Open Chrome and navigate to `chrome://extensions/`
+- Enable "Developer mode" in the top-right corner
+- Click "Load unpacked" and select the `extension` folder from the cloned repository
+
+3. **Configure Gemini API Key**
+- Get your Gemini API key from [Google AI Studio](https://t.co/4f9u2bgVlz)
+- Click on the Detoxify extension icon in Chrome
+- Enter your API key in the settings
+
+4. **Initialize and Use**
+- Navigate to [YouTube](https://youtube.com)
+- Type your prefered category and toggle the filter on
+- Chose batch size per video : 8-12 (ideal)
+- The extension will automatically start filtering content based on your preferences
 
 2. **Install Dependencies**
 ```bash
