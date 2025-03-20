@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detoxify</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div id="root">
+        <div class="header">
+            <h1>Detoxify</h1>
+            <p class="subtitle">Enter content to filter</p>
+        </div>
+        
+        <div class="toggle-container">
+            <label class="switch">
+                <input type="checkbox" id="filterToggle" checked>
+                <span class="slider round"></span>
+            </label>
+            <span class="toggle-label">Filter Enabled</span>
+        </div>
+        
+        <div class="batch-size-container">
+            <div class="batch-size-header">
+                <span>Batch Size: <span id="batchSizeValue">15</span></span>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="5" max="20" value="15" class="batch-size-slider" id="batchSizeSlider">
+                <div class="slider-labels">
+                    <span>5</span>
+                    <span>20</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="category-container">
+            <div class="input-group">
+                <label for="userCategory">Filter Category:</label>
+                <input 
+                    type="text" 
+                    id="userCategory" 
+                    name="userCategory" 
+                    placeholder="Enter category (e.g., coding, chess)"
+                    class="category-input"
+                >
+            </div>
+        </div>
+
+        <div class="api-key-container">
+            <div class="input-group">
+                <label for="apiKey">Gemini API Key:</label>
+                <input 
+                    type="password" 
+                    id="apiKey" 
+                    name="apiKey" 
+                    placeholder="Enter your Gemini API Key"
+                    class="api-input"
+                >
+                <button id="saveApiKey" class="api-button">Save Key</button>
+            </div>
+        </div>
+
+        <button id="searchButton">Apply Filter</button>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
