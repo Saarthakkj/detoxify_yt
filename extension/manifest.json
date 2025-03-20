@@ -13,10 +13,10 @@
     "storage"
   ],
   "host_permissions": [
-    "https://generativelanguage.googleapis.com/*",
-    "*://*.youtube.com/*",
-    "*://*.youtu.be/*" ,
-    "*://*.googlevideo.com/*"
+  "https://generativelanguage.googleapis.com/*",
+  "*://*.youtube.com/*",
+  "*://*.youtu.be/*",
+  "*://*.googlevideo.com/*"
   ],
   "background": {
     "service_worker": "background.js",

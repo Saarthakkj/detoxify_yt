@@ -51,7 +51,7 @@ async function initializeWithSavedCategory() {
                     const allInitialElements = await waitForElements('YTD-RICH-ITEM-RENDERER');
                     if (allInitialElements && allInitialElements.length > 0) {
                         console.log("[contentscript.js]: Processing initial elements:", allInitialElements.length);
-                        await filterVideos(allInitialElements);
+                        await filterVideos(allInitialElements , 'YTD-RICH-ITEM-RENDERER');
                     }
                 } catch (error) {
                     console.error("[contentscript.js]: Error processing initial elements:", error);
@@ -86,6 +86,20 @@ const navigationObserver = new MutationObserver(() => {
         
         // Reinitialize filtering
         initializeWithSavedCategory();
+    }
+    
+    // Check if we're on a search results page and need to reapply filtering
+    if (url.includes('/results?search_query=') && window.filterEnabled && window.userCategory) {
+        console.log('[contentscript.js]: Search results page detected, ensuring filtering is applied...');
+        setTimeout(() => {
+            if (window.observerRunning) {
+                removeShorts('YTD-REEL-SHELF-RENDERER');
+                filterVideos('YTD-VIDEO-RENDERER');
+            } else {
+                window.observerRunning = true;
+                setupObserver();
+            }
+        }, 1000); // Small delay to ensure content has loaded
     }
 });
 
@@ -143,7 +157,7 @@ function setupObserver() {
                             const batchToProcess = observer.collectedItemNodes.splice(0, window.batchSize); // Take batch and remove them
                             processedElements.add(batchToProcess);
                             console.log(`[Observer] Processing video batch of ${window.batchSize}`);
-                            await filterVideos(batchToProcess);     
+                            await filterVideos(batchToProcess , 'YTD-RICH-ITEM-RENDERER');     
                         }
                     }
                 }
@@ -210,8 +224,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 window.observerRunning = true;
                 setupObserver();
             }
-            removeShorts();
-            filterVideos();
+            removeShorts('YTD-RICH-SECTION-RENDERER');
+            filterVideos('YTD-RICH-ITEM-RENDERER');
         } else {
             // If filtering is disabled, disconnect observer
             if (observer) {
@@ -237,8 +251,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 window.observerRunning = true;
                 setupObserver();
             }
-            removeShorts();
-            filterVideos();
+            removeShorts('YTD-RICH-SECTION-RENDERER');
+            filterVideos('YTD-RICH-ITEM-RENDERER');
         } else {
             // Disable filtering
             if (observer) {
@@ -275,6 +289,12 @@ function restoreHiddenElements() {
     const videoItems = document.getElementsByTagName('YTD-RICH-ITEM-RENDERER');
     for (let i = 0; i < videoItems.length; i++) {
         videoItems[i].style.display = '';
+    }
+    
+    // Restore search result video items
+    const searchVideoItems = document.getElementsByTagName('YTD-VIDEO-RENDERER');
+    for (let i = 0; i < searchVideoItems.length; i++) {
+        searchVideoItems[i].style.display = '';
     }
     
     // Reset processed tracking
@@ -350,12 +370,11 @@ var waitForElements = (selector, timeout = 1000) => {
                     resolve(Array.from(elements));
                 } else if (Date.now() - startTime >= timeout) {
                     console.log(`timeout waiting for : ${selector}`)
-                    setTimeout(checkElements, 100);
+                    //setTimeout(checkElements, 100); //not recursive call to checkElements anymore
                 } else {
                     setTimeout(checkElements, 100);
                 }
             };
-
             checkElements();
         }); 
     } catch(error) {
@@ -364,10 +383,11 @@ var waitForElements = (selector, timeout = 1000) => {
 };
 
 // for removing yt shorts fro the page
-var removeShorts = async (elements) => {
+var removeShorts = async (elements , tag) => {
     if(!elements){
         // console.log("no elements passed , creating own elements");
-        elements = await waitForElements('YTD-RICH-SECTION-RENDERER');
+        //tag = tag || 'YTD-RICH-SECTION-RENDERER';
+        elements = await waitForElements(tag);
         // const element2 = await waitForElements('YT-LOCKUP-VIEW-MODEL');
         // elements = element1.concat(element2);
     }
@@ -381,7 +401,7 @@ var removeShorts = async (elements) => {
         // shortelements.forEach(shorties => processedSections.add(shorties));
 
         for(let i = 0; i < elements.length; i++){
-            // console.log("shorts[i] : " , shortelements[i]);
+            console.log("shorts[i] : " , elements[i]);
             elements[i].style.display= 'none'; 
         }
         console.log(`removeShorts called ${removeShortsCount} times`); // Log counter
@@ -389,28 +409,6 @@ var removeShorts = async (elements) => {
         console.error("Error in removeShorts:", error);
     }
 };
-
-// // for removing grid renderers from the page
-// var removeGrids = async (elements) => {
-//     if(!elements){
-//         return ;
-//         // console.log("no elements passed , creating own elements");
-//         elements = await waitForElements('YTD-RICH-GRID-RENDERER');
-//     }
-//     try{
-//         // Track how many times this function is called
-//         window.removeGridsCount = (window.removeGridsCount || 0) + 1;
-        
-//         console.log("grid renderer elements : " , elements);
-        
-//         for(let i = 0; i < elements.length; i++){
-//             elements[i].style.display = 'none'; 
-//         }
-//         console.log(`removeGrids called ${window.removeGridsCount} times`); // Log counter
-//     }catch(error){
-//         console.error("Error in removeGrids:", error);
-//     }
-// };
 
 
 // removing function for each element (that waits for thumbnails and titlte to load) and then remove every element passed through it
@@ -424,7 +422,7 @@ var processElement = async (element) => {
 };
 
 // Function to filter videos based on the search string
-var filterVideos = async (elements) => {
+var filterVideos = async (elements , tag) => {
     try {
         filterVideosCount++; // Increment counter
         if (!window.userCategory) {
@@ -436,7 +434,7 @@ var filterVideos = async (elements) => {
         // for first call : 
         if(!elements || !Array.isArray(elements)){
             // console.log("no elements passed , creating own elements");
-            elements = await waitForElements('YTD-RICH-ITEM-RENDERER');
+            elements = await waitForElements(tag);
         }
 
         // console.log("elements : ", elements);
