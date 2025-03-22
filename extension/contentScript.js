@@ -1,3 +1,8 @@
+/*
+* TODO : reduce the complexity of removing all (n) elements from (n^2) to (n) : n -> batchsize : preserving indices before preprocessing elements and operating on it 
+ */
+
+
 document.requestStorageAccess().then(() => {
     console.log("Access granted");
 }).catch(() => {
@@ -27,21 +32,19 @@ function determineUrlType(url) {
 function observer_assigner(url) {
     var urlType = determineUrlType(url);
     console.log('User is on:', urlType);
+    console.log("is filter enabled : " , window.filterEnabled) ;
     if(!window.filterEnabled) return  ;
-    window.observerRunning = True;
+    console.log("filter enabled") ;
+    window.observerRunning = true;
     if(window.userCategory){
-        initializeWithSavedCategory(tags[determineUrlType]);
+        console.log("intialising with saved category");
+        initializeWithSavedCategory(tags[determineUrlType(url)]);
     }
     else{
-        setupObserver(tags[determineUrlType]);
+        console.log("intialising without  saved category");
+        setupObserver(tags[determineUrlType(url)]);
     }
 }
-
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-    if (changeInfo.status === 'complete') {
-        observer_assigner(tab.url) ;
-    }
-});
 
 // Add to your script
 function ensureObserverHealthy() {
@@ -55,6 +58,7 @@ function ensureObserverHealthy() {
     // console.log("content container : " , document.querySelector('#content'));
 }
 async function initializeWithSavedCategory([fileterVideostag , removeShortstag]) {
+    console.log("[inside initializeWithSavedCategory] :  tags are : " ,[fileterVideostag , removeShortstag] ) ;
     try {
         const result = await chrome.storage.sync.get(['USER_CATEGORY', 'GEMINI_API_KEY', 'FILTER_ENABLED', 'BATCH_SIZE']);
         // Set default batch size if not set
@@ -69,12 +73,6 @@ async function initializeWithSavedCategory([fileterVideostag , removeShortstag])
             
             // Only start observer and process elements if filtering is enabled
             if (window.filterEnabled) {
-                // Start observer immediately
-                if (!window.observerRunning) {
-                    window.observerRunning = true;
-                    setupObserver([fileterVideostag , removeShortstag]);
-                }
-                
                 try {
                     //? Handle initial shorts first
                     const initialShorts = await waitForElements(removeShortstag);
@@ -92,6 +90,9 @@ async function initializeWithSavedCategory([fileterVideostag , removeShortstag])
                 } catch (error) {
                     console.error("[contentscript.js]: Error processing initial elements:", error);
                 }
+                //after dealing with initial elements , call the setupobserver : 
+                console.log("calling setupbObserver") ; 
+                setupObserver([fileterVideostag , removeShortstag]);
             } else {
                 console.log("[contentscript.js]: Filtering is disabled, not starting observer");
             }
@@ -99,11 +100,12 @@ async function initializeWithSavedCategory([fileterVideostag , removeShortstag])
     } catch (error) {
         console.error("[contentscript.js]: Error initializing with saved category:", error);
     }
+    
 }
 
-// Add both event listeners for initialization
-window.addEventListener('load', initializeWithSavedCategory);
-document.addEventListener('DOMContentLoaded', initializeWithSavedCategory);
+// // Add both event listeners for initialization
+// window.addEventListener('load', observer_assigner);
+// document.addEventListener('DOMContentLoaded', observer_assigner);
 
 
 //? redundant code now as we are implementing everything in one if-else statements : >
@@ -143,15 +145,15 @@ document.addEventListener('DOMContentLoaded', initializeWithSavedCategory);
 // });
 
 // Start observing for navigation changes
-navigationObserver.observe(document, { subtree: true, childList: true });
+// navigationObserver.observe(document, { subtree: true, childList: true });
 
 // Initialize counters
 var removeShortsCount = 0;
 var filterVideosCount = 0;
 
-var processedSections = new WeakSet();
-// let userCategory = null;
-var processedElements = new WeakSet();
+// var processedSections = new WeakSet();
+// // let userCategory = null;
+// var processedElements = new WeakSet();
 
 var contentContainer = null ;
 
@@ -160,11 +162,10 @@ let observer = null;
 
 // Function to setup observer
 function setupObserver([fileterVideostag , removeShortstag]) {
-    // console.log('reached inside setup observer');
+    console.log('reached inside setup observer');
     if (observer) {
         console.log("observer already connected , so disconnecting it");
         observer.disconnect();
-
     }
     // console.log('observer endpoint 1');
     
@@ -174,8 +175,8 @@ function setupObserver([fileterVideostag , removeShortstag]) {
                 for (const node of mutation.addedNodes) {
                     // console.log('inside mutaitons' , mutations);
                     // Handle shorts immediately
-                    if (node.tagName === removeShortstag && !processedSections.has(node)) {
-                        processedSections.add(node);
+                    if (node.tagName === removeShortstag ) {
+                        // processedSections.add(node);
                         console.log("[Observer] Processing shorts section" , node);
                         await removeShorts([node] , removeShortstag); // Process sections immediately
                     }
@@ -188,13 +189,13 @@ function setupObserver([fileterVideostag , removeShortstag]) {
                     // }
                     
                     // Collect video nodes for batch processing
-                    if (node.tagName === fileterVideostag && !processedElements.has(node)) {
+                    if (node.tagName === fileterVideostag) {
                         observer.collectedItemNodes.push(node);
                         
                         // Process when we have enough videos based on batch size setting
-                        if (observer.collectedItemNodes.length >= window.batchSize) {
+                        while (observer.collectedItemNodes.length >= window.batchSize) {
                             const batchToProcess = observer.collectedItemNodes.splice(0, window.batchSize); // Take batch and remove them
-                            processedElements.add(batchToProcess);
+                            // processedElements.add(batchToProcess);
                             console.log(`[Observer] Processing video batch of ${window.batchSize}`);
                             await filterVideos(batchToProcess , fileterVideostag);     
                         }
@@ -222,11 +223,6 @@ function setupObserver([fileterVideostag , removeShortstag]) {
     setInterval(ensureObserverHealthy , 1000);
 }
 
-function checkUrl() {
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        return url = tabs[0].url;
-    });
-}
 
 /** 
  * @message : An object containing data sent from the sender. Attributes may include:
@@ -244,8 +240,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         window.userCategory = message.searchString;
     }
 
-    observer_assigner(checkUrl); 
-
     console.log("[contentscript.js]: Message received:", message);
 
     if (message.action === "filter") {
@@ -258,9 +252,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Check if we need to reinitialize the observer (category changed)
         if (message.reinitializeObserver) {
             console.log("[contentscript.js]: Reinitializing observer due to category change");
-            // Reset tracking sets for processed content
-            processedElements = new WeakSet();
-            processedSections = new WeakSet();
+            // // Reset tracking sets for processed content
+            // processedElements = new WeakSet();
+            // processedSections = new WeakSet();
             
             // Disconnect existing observer if it exists
             if (observer) {
@@ -275,7 +269,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (!window.observerRunning) {
                 console.log("connecting observer"); 
                 window.observerRunning = true;
-                observer_assigner(checkUrl);
+                observer_assigner(message.url);
             }
             // removeShorts({}, 'YTD-RICH-SECTION-RENDERER');
             // filterVideos({}, 'YTD-RICH-ITEM-RENDERER');
@@ -288,9 +282,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
             window.observerRunning = false;
 
-            //!  tags[determineUrlType(checkUrl())] -> is an important value that gives tags for any page 
+            //!  tags[determineUrlType(message.url)] -> is an important value that gives tags for any page 
             // Show any hidden elements when filter is disabled
-            restoreHiddenElements(tags[determineUrlType(checkUrl())]);
+            restoreHiddenElements(tags[determineUrlType(message.url)]);
         }
         
         sendResponse({status: "received"});
@@ -303,7 +297,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             // Re-enable filtering
             if (!window.observerRunning) {
                 window.observerRunning = true;
-                observer_assigner(checkUrl);
+                observer_assigner(message.url);
             }
             // removeShorts({}, 'YTD-RICH-SECTION-RENDERER');
             // filterVideos({}, 'YTD-RICH-ITEM-RENDERER');
@@ -314,7 +308,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 observer = null;
             }
             window.observerRunning = false;
-            restoreHiddenElements(tags[determineUrlType(checkUrl())]);
+            restoreHiddenElements(tags[determineUrlType(message.url)]);
         }
         
         sendResponse({status: "received"});
@@ -323,6 +317,49 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         window.batchSize = message.batchSize;
         console.log("[contentscript.js]: Batch size updated to:", window.batchSize);
         sendResponse({status: "received"});
+    } else if (message.action === "tabUpdated") { // added to handle tab updates
+        console.log("[contentscript.js]: Tab updated message received with url:", message.url);
+        
+        // Update userCategory if available
+        if (message.userCategory) {
+            window.userCategory = message.userCategory;
+            console.log("[contentscript.js]: User category from tabUpdated:", window.userCategory);
+        }
+        
+        // Update batchSize if available
+        if (message.batchSize) {
+            window.batchSize = message.batchSize;
+            console.log("[contentscript.js]: Batch size from tabUpdated:", window.batchSize);
+        }
+        
+        // Make sure we have the filter state
+        if (message.filterEnabled !== undefined) {
+            window.filterEnabled = message.filterEnabled;
+            console.log("[contentscript.js]: Filter state from tabUpdated:", window.filterEnabled);
+        } else {
+            // If not provided, get it from storage as a fallback
+            chrome.storage.sync.get(['FILTER_ENABLED', 'USER_CATEGORY', 'BATCH_SIZE'], (result) => {
+                window.filterEnabled = result.FILTER_ENABLED !== false;
+                console.log("[contentscript.js]: Filter state from storage:", window.filterEnabled);
+                
+                // Also set category and batch size if they weren't in the message
+                if (!window.userCategory && result.USER_CATEGORY) {
+                    window.userCategory = result.USER_CATEGORY;
+                    console.log("[contentscript.js]: User category from storage:", window.userCategory);
+                }
+                
+                if (!window.batchSize) {
+                    window.batchSize = result.BATCH_SIZE || 15;
+                    console.log("[contentscript.js]: Batch size from storage:", window.batchSize);
+                }
+                
+                observer_assigner(message.url);
+            });
+            return true; // Keep message channel open for async operation
+        }
+        
+        // Only call observer_assigner if we got settings directly from message
+        observer_assigner(message.url);
     }
     return true;
 });
@@ -345,9 +382,9 @@ function restoreHiddenElements([filterVideostag , removeShootstag]) {
         videoItems[i].style.display = '';
     }
     
-    // Reset processed tracking
-    processedElements = new WeakSet();
-    processedSections = new WeakSet();
+    // // Reset processed tracking
+    // processedElements = new WeakSet();
+    // processedSections = new WeakSet();
 }
 
 // setInterval(() => {
@@ -407,6 +444,7 @@ var scrapperTitleVector = async (elements) => {
 
 // Add this helper function for waiting for elements to load
 var waitForElements = (selector, timeout = 1000) => {
+    if(selector === "") return ;
     try {
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
@@ -419,7 +457,7 @@ var waitForElements = (selector, timeout = 1000) => {
                     console.log(`timeout waiting for : ${selector}`)
                     //setTimeout(checkElements, 100); //not recursive call to checkElements anymore
                 } else {
-                    setTimeout(checkElements, 100);
+                    setTimeout(checkElements, 1000);
                 }
             };
             checkElements();
@@ -488,12 +526,12 @@ var filterVideos = async (elements , tag) => {
 
         // console.log("elements : ", elements);
 
-        // Filter out already processed elements
-        elements = elements.filter(el => !processedElements.has(el));
-        if (elements.length === 0) return; // Exit if no new elements
+        // // Filter out already processed elements
+        // elements = elements.filter(el => !processedElements.has(el));
+        // if (elements.length === 0) return; // Exit if no new elements
 
-        // Mark elements as processed
-        elements.forEach(el => processedElements.add(el));
+        // // Mark elements as processed
+        // elements.forEach(el => processedElements.add(el));
 
         //elements only contains video titles (not shorts) ;
 

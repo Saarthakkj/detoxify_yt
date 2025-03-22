@@ -78,6 +78,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // Initialize on install and startup
 chrome.runtime.onStartup.addListener(initializeModel);
 
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url) {
+    console.log("[background.js]: Tab updated:", tab.url);
+    
+    // Get the current user settings from storage before sending message
+    chrome.storage.sync.get(['FILTER_ENABLED', 'USER_CATEGORY', 'BATCH_SIZE'], (result) => {
+      // Default to enabled if not set
+      const filterEnabled = result.FILTER_ENABLED !== false;
+      // Default batch size to 15 if not set
+      const batchSize = result.BATCH_SIZE || 15;
+      
+      chrome.tabs.sendMessage(tabId, {
+        action: "tabUpdated",
+        url: tab.url,
+        filterEnabled: filterEnabled,
+        userCategory: result.USER_CATEGORY,
+        batchSize: batchSize
+      }).catch(err => {
+        console.log("caught an error in sending message to the tab : " , err);
+      });
+    });
+  }
+});
+
 //! store your api key running this permanently in your browser:
 
 // chrome.storage.sync.set({ GEMINI_API_KEY: 'your_api_key_here' }, () => {
