@@ -25,7 +25,7 @@ Detoxify is an AI-powered Chrome extension that intelligently filters your YouTu
 
 1. **Clone the Repository**
 ```bash
-git clone https://github.com/Saarthakkj/detoxify_yt.git -b custom_input
+git clone https://github.com/Saarthakkj/detoxify_yt.git -b multiple_url_handling
 cd detoxify_yt
 ```
 
