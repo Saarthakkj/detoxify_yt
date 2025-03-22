@@ -1,6 +1,6 @@
 /*
 * TODO : reduce the complexity of removing all (n) elements from (n^2) to (n) : n -> batchsize : preserving indices before preprocessing elements and operating on it 
- */
+*/
 
 
 document.requestStorageAccess().then(() => {
@@ -26,6 +26,7 @@ const tags = {
 //         return 'Other';
 //     }
 // }
+
 function determineUrlType(url) {
     if ((url.indexOf('youtube.com/watch?v=') !== -1)) {
         return 'Watch';
@@ -69,8 +70,8 @@ function ensureObserverHealthy() {
     // console.log("contents container : " , document.querySelector('#contents'));
     // console.log("content container : " , document.querySelector('#content'));
 }
-async function initializeWithSavedCategory([fileterVideostag, removeShortstag]) {
-    console.log("[inside initializeWithSavedCategory]: tags are:", [fileterVideostag, removeShortstag]);
+async function initializeWithSavedCategory([filterVideostag, removeShortstag]) {
+    console.log("[inside initializeWithSavedCategory]: tags are:", [filterVideostag, removeShortstag]);
     try {
         const result = await chrome.storage.sync.get(['USER_CATEGORY', 'GEMINI_API_KEY', 'FILTER_ENABLED', 'BATCH_SIZE']);
         // Set default batch size if not set
@@ -106,11 +107,11 @@ async function initializeWithSavedCategory([fileterVideostag, removeShortstag]) 
                     }
                 
                     // Similar handling for video tags
-                    let videoTagsToUse = fileterVideostag;
+                    let videoTagsToUse = filterVideostag;
                     
-                    // If fileterVideostag is an array of arrays, flatten it
-                    if (Array.isArray(fileterVideostag) && fileterVideostag.length > 0 && Array.isArray(fileterVideostag[0])) {
-                        videoTagsToUse = fileterVideostag.flat();
+                    // If filterVideostag is an array of arrays, flatten it
+                    if (Array.isArray(filterVideostag) && filterVideostag.length > 0 && Array.isArray(filterVideostag[0])) {
+                        videoTagsToUse = filterVideostag.flat();
                         console.log("[contentscript.js]: Flattened video tags:", videoTagsToUse);
                     }
                     
@@ -125,7 +126,7 @@ async function initializeWithSavedCategory([fileterVideostag, removeShortstag]) 
                 
                 //after dealing with initial elements, call the setupObserver: 
                 console.log("calling setupObserver");
-                setupObserver([fileterVideostag, removeShortstag]);
+                setupObserver([filterVideostag, removeShortstag]);
             } else {
                 console.log("[contentscript.js]: Filtering is disabled, not starting observer");
             }
@@ -158,7 +159,7 @@ let observer = null;
 window.URL = null; // Initialize the URL variable
 
 // Function to setup observer
-function setupObserver([fileterVideostag, removeShortstag]) {
+function setupObserver([filterVideostag, removeShortstag]) {
     console.log('reached inside setup observer');
     // if (observer) {
     //     console.log("observer already connected , so disconnecting it");
@@ -180,10 +181,10 @@ function setupObserver([fileterVideostag, removeShortstag]) {
                         await removeShorts([node], removeShortstag);
                     }
                     
-                    // Handle videos - check if node's tagName matches any in the fileterVideostag array
-                    const isVideo = Array.isArray(fileterVideostag)
-                        ? fileterVideostag.includes(node.tagName)
-                        : node.tagName === fileterVideostag;
+                    // Handle videos - check if node's tagName matches any in the filterVideostag array
+                    const isVideo = Array.isArray(filterVideostag)
+                        ? filterVideostag.includes(node.tagName)
+                        : node.tagName === filterVideostag;
                     
                     if (isVideo) {
                         observer.collectedItemNodes.push(node);
@@ -192,7 +193,7 @@ function setupObserver([fileterVideostag, removeShortstag]) {
                         while (observer.collectedItemNodes.length >= window.batchSize) {
                             const batchToProcess = observer.collectedItemNodes.splice(0, window.batchSize);
                             console.log(`[Observer] Processing video batch of ${window.batchSize}`);
-                            await filterVideos(batchToProcess, fileterVideostag);
+                            await filterVideos(batchToProcess, filterVideostag);
                         }
                     }
                 }
