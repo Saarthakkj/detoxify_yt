@@ -22,10 +22,13 @@ function determineUrlType(url) {
     }
 }
 
+
+//assigns oberserver , takes url in the args
 function observer_assigner(url) {
     var urlType = determineUrlType(url);
     console.log('User is on:', urlType);
     if(!window.filterEnabled) return  ;
+    window.observerRunning = True;
     if(window.userCategory){
         initializeWithSavedCategory(tags[determineUrlType]);
     }
@@ -47,9 +50,6 @@ function ensureObserverHealthy() {
         window.observerRunning = true;
         setupObserver();
     }
-    // else{
-    //     // console.log(`[Detoxify  Observer is healthy`);
-    // }
 
     // console.log("contents container : " , document.querySelector('#contents'));
     // console.log("content container : " , document.querySelector('#content'));
@@ -160,13 +160,13 @@ let observer = null;
 
 // Function to setup observer
 function setupObserver([fileterVideostag , removeShortstag]) {
-    console.log('reached inside setup observer');
+    // console.log('reached inside setup observer');
     if (observer) {
         console.log("observer already connected , so disconnecting it");
         observer.disconnect();
 
     }
-    console.log('observer endpoint 1');
+    // console.log('observer endpoint 1');
     
     observer = new MutationObserver(async (mutations) => {
         try {
@@ -206,7 +206,7 @@ function setupObserver([fileterVideostag , removeShortstag]) {
         }
     });
 
-    console.log("observer endpoint 2");
+    // console.log("observer endpoint 2");
     // Add collections to observer instance
     observer.collectedItemNodes = [];
 
@@ -220,6 +220,12 @@ function setupObserver([fileterVideostag , removeShortstag]) {
     }
     console.log("observer connected ? : " , observer);
     setInterval(ensureObserverHealthy , 1000);
+}
+
+function checkUrl() {
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+        return url = tabs[0].url;
+    });
 }
 
 /** 
@@ -236,13 +242,6 @@ function setupObserver([fileterVideostag , removeShortstag]) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.searchString) {
         window.userCategory = message.searchString;
-    }
-
-
-    function checkUrl() {
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            return url = tabs[0].url;
-        });
     }
 
     observer_assigner(checkUrl); 
@@ -268,7 +267,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 observer.disconnect();
                 observer = null;
             }
-            
             window.observerRunning = false;
         }
         
@@ -277,10 +275,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (!window.observerRunning) {
                 console.log("connecting observer"); 
                 window.observerRunning = true;
-                setupObserver();
+                observer_assigner(checkUrl);
             }
-            removeShorts({}, 'YTD-RICH-SECTION-RENDERER');
-            filterVideos({}, 'YTD-RICH-ITEM-RENDERER');
+            // removeShorts({}, 'YTD-RICH-SECTION-RENDERER');
+            // filterVideos({}, 'YTD-RICH-ITEM-RENDERER');
         } else {
             // If filtering is disabled, disconnect observer
             if (observer) {
@@ -289,9 +287,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 observer = null;
             }
             window.observerRunning = false;
-            
+
+            //!  tags[determineUrlType(checkUrl())] -> is an important value that gives tags for any page 
             // Show any hidden elements when filter is disabled
-            restoreHiddenElements();
+            restoreHiddenElements(tags[determineUrlType(checkUrl())]);
         }
         
         sendResponse({status: "received"});
@@ -304,10 +303,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             // Re-enable filtering
             if (!window.observerRunning) {
                 window.observerRunning = true;
-                setupObserver();
+                observer_assigner(checkUrl);
             }
-            removeShorts({}, 'YTD-RICH-SECTION-RENDERER');
-            filterVideos({}, 'YTD-RICH-ITEM-RENDERER');
+            // removeShorts({}, 'YTD-RICH-SECTION-RENDERER');
+            // filterVideos({}, 'YTD-RICH-ITEM-RENDERER');
         } else {
             // Disable filtering
             if (observer) {
@@ -315,7 +314,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 observer = null;
             }
             window.observerRunning = false;
-            restoreHiddenElements();
+            restoreHiddenElements(tags[determineUrlType(checkUrl())]);
         }
         
         sendResponse({status: "received"});
@@ -331,25 +330,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
 // Function to restore hidden elements when filter is disabled
-function restoreHiddenElements() {
+function restoreHiddenElements([filterVideostag , removeShootstag]) {
     console.log("[contentscript.js]: Restoring hidden elements");
     
     // Restore shorts sections
-    const shortsSections = document.getElementsByTagName('YTD-RICH-SECTION-RENDERER');
+    const shortsSections = document.getElementsByTagName(removeShootstag);
     for (let i = 0; i < shortsSections.length; i++) {
         shortsSections[i].style.display = '';
     }
     
     // Restore video items
-    const videoItems = document.getElementsByTagName('YTD-RICH-ITEM-RENDERER');
+    const videoItems = document.getElementsByTagName(filterVideostag);
     for (let i = 0; i < videoItems.length; i++) {
         videoItems[i].style.display = '';
-    }
-    
-    // Restore search result video items
-    const searchVideoItems = document.getElementsByTagName('YTD-VIDEO-RENDERER');
-    for (let i = 0; i < searchVideoItems.length; i++) {
-        searchVideoItems[i].style.display = '';
     }
     
     // Reset processed tracking
@@ -380,7 +373,6 @@ async function sendPostRequest(titles , input) {
             type: "fetchInference",
             data: data
         });
-
         console.log("Received response from background.js:", t_dash_vector);
         return t_dash_vector; // Directly return the array
     } catch (error) {
