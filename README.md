@@ -5,16 +5,15 @@
 
 > Smart Content Filtering for a Better YouTube Experience
 
-Detoxify is an AI-powered Chrome extension that intelligently filters your YouTube feed using Google's advanced Gemini AI model, providing a personalized and focused viewing experience.
+Detoxify is an AI-powered Chrome extension that uses Google's Gemini AI to intelligently filter your YouTube feed based on your preferences, helping you focus on content that matters to you.
 
 ## 📑 Table of Contents
 - [Quick Start](#-quick-start)
-- [Overview](#-overview)
-- [System Architecture](#-system-architecture)
-- [Features](#-features)
-- [Technical Details](#-technical-details)
-- [Workflow](#-workflow)
-- [Security & Privacy](#-security--privacy)
+- [Project Inspiration](#-project-inspiration)
+- [What Detoxify Does](#-what-detoxify-does)
+- [How It Works](#-how-it-works)
+- [Key Features](#-key-features)
+- [Privacy & Security](#-privacy--security)
 - [Contributing](#-contributing)
 - [License](#-license)
 - [Contact](#-contact)
@@ -30,9 +29,7 @@ cd detoxify_yt
 ```
 
 2. **Load the Extension in Chrome**
-```bash
-# No build step required for unpacked extension
-```
+
 - Open Chrome and navigate to `chrome://extensions/`
 - Enable "Developer mode" in the top-right corner
 - Click "Load unpacked" and select the `extension` folder from the cloned repository
@@ -48,95 +45,62 @@ cd detoxify_yt
 - Chose batch size per video : 8-12 (ideal)
 - The extension will automatically start filtering content based on your preferences
 
-## 🎯 Overview
+## 💡 Project Inspiration
 
-Detoxify leverages Google's Gemini AI to provide:
-- Intelligent content filtering
-- Real-time video processing
-- Custom content preferences
-- Automatic shorts and news removal
+Detoxify was inspired by [Harkirat Singh's YouTube video](https://www.youtube.com/watch?v=sz9K1e3LO4M) on building Chrome extensions. His guidance and teaching approach provided the foundation for this project. This extension exists as a contribution to the knowledge Harkirat shared, taking his concepts further by implementing AI-powered content filtering for YouTube.
 
-## 🏗️ System Architecture
+The project aims to continue the spirit of innovation that Harkirat encourages in his content, helping users create more meaningful experiences online.
 
-### 1. Chrome Extension (Frontend)
-- Real-time content scraping
-- Dynamic video filtering
-- Batch processing (15 videos per batch)
-- Automatic shorts removal
+## 🎯 What Detoxify Does
 
-### 2. Gemini API Integration
-- Model: gemini-2.0-flash-lite-preview-02-05
-- Average latency: 1.002s
-- Real-time inference capabilities
-- Custom content filtering
+Detoxify transforms your YouTube browsing experience by:
 
-## 🚀 Features
+- Letting you specify exactly what type of content you want to see
+- Using Gemini AI to instantly detect videos matching your preferences
+- Filtering out content that doesn't align with your specified interests
+- Automatically removing distracting shorts and unwanted videos
+- Providing a cleaner, more focused YouTube feed tailored to your needs
 
-- **Smart Filtering**: Powered by Gemini AI
-- **Fast Processing**: ~1 second latency per batch (of 15 videos)
-- **Customizable**: User-defined content preferences
-- **Automatic**: Real-time content processing
-- **Efficient**: 15-video batch processing
-- **Shorts Removal**: Automatic YouTube shorts filtering
+## ⚙️ How It Works
 
-## 🛠️ Technical Details
+1. **Set Your Preferences**: Simply type in what categories of content you're interested in
+2. **Browse YouTube**: Navigate YouTube as you normally would
+3. **Real-time AI Processing**: The extension uses Google's Gemini AI to analyze video content as they load
+4. **Smart Filtering**: Videos are instantly filtered based on your preferences
+5. **Continuous Updates**: Your feed refreshes automatically as you scroll, with only relevant content
 
-### Performance Metrics
-- Average API Latency: 1.002s
-- Batch Processing: 15 videos
-- Real-time processing capability
+The extension processes videos in batches for efficiency (8-12 videos at a time is optimal) with an average processing time of just 1.59 second per batch.
 
-### System Requirements
-- Chrome Browser (latest version)
-- Internet connection
-- Gemini API key
+## 🔑 Key Features
 
-### Core Dependencies
-```json
-{
-  "dependencies": {
-    "@google/generative-ai": "^0.2.0",
-    "chrome-types": "^0.1.246"
-  }
-}
-```
+- **True Real-Time Filtering**: Unlike other tools, Detoxify processes content almost instantaneously
+- **Simple Preference Setting**: Just type what you want to see, and Gemini handles the rest
+- **Personalized Content**: View only the content that matches your specified interests
+- **Distraction Removal**: Automatically filters out shorts and other unwanted content
+- **Fast Processing**: Efficient batch processing with minimal latency (~1 second)
+- **User Control**: Easily toggle filtering on/off as needed
+- **Private Operation**: All processing happens on your device
 
-## 🔄 Workflow
+## 🔒 Privacy & Security
 
-1. **Initial Setup**
-   - Install Chrome extension
-   - Configure Gemini API key
-   - Set content preferences
-
-2. **Content Processing**
-   - Collects videos in batches of 15
-   - Sends to Gemini API for analysis
-   - Filters based on preferences
-
-3. **Real-time Updates**
-   - Processes new content automatically
-   - Removes YouTube shorts
-   - Updates feed instantly
-
-## 🔒 Security & Privacy
-
-- Secure API key storage using Chrome Storage API
-- HTTPS-only communication
-- Client-side processing
-- No data collection or storage
-- See our [Privacy Policy](PRIVACY.md) for details
+- Your API key is securely stored using Chrome's Storage API
+- All communication with Google's API uses secure HTTPS
+- No user data is collected or stored
+- Content analysis happens on-demand and isn't retained
 
 ## 🤝 Contributing
 
+We welcome contributions to improve Detoxify:
+
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/Enhancement`)
-3. Commit changes (`git commit -m 'Add Enhancement'`)
-4. Push to branch (`git push origin feature/Enhancement`)
-5. Open Pull Request
+2. Create a feature branch (`git checkout -b feature/enhancement`)
+3. Commit your changes (`git commit -m 'Add enhancement'`)
+4. Push to the branch (`git push origin feature/enhancement`)
+5. Open a Pull Request
 
 ## 📝 License
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 📧 Contact
 
