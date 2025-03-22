@@ -48,16 +48,6 @@ cd detoxify_yt
 - Chose batch size per video : 8-12 (ideal)
 - The extension will automatically start filtering content based on your preferences
 
-2. **Install Dependencies**
-```bash
-npm install
-```
-
-3. **Configure Extension**
-- Add your Gemini API key
-- Set content preferences
-- Enable in Chrome
-
 ## 🎯 Overview
 
 Detoxify leverages Google's Gemini AI to provide:
