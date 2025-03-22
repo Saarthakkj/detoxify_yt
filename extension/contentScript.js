@@ -9,7 +9,7 @@ document.requestStorageAccess().then(() => {
     console.error('Storage access denied');
 });
 
-const tags = {
+var tags = {
     "Home" : ["YTD-RICH-ITEM-RENDERER" , "YTD-RICH-SECTION-RENDERER"] ,
     "Watch" : ["YTD-COMPACT-VIDEO-RENDERER" , ""] , 
     "Search" : [["YTD-VIDEO-RENDERER" , "YT-LOCKUP-VIEW-MODEL" , "YTD-CHANNEL-RENDERER"] , ["YTD-REEL-SHELF-RENDERER" , "YTD-SHELF-RENDERER"]]
