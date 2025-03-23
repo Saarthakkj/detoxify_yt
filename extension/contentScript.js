@@ -13,6 +13,21 @@ document
 
 var search_removing_counts = 0;
 
+// Add this near your observer setup
+let lastUrl = window.location.href;
+
+function checkUrlChange() {
+    const currentUrl = window.location.href;
+    if (currentUrl !== lastUrl) {
+        console.log('[contentscript.js]: URL switched from', lastUrl, 'to', currentUrl);
+        lastUrl = currentUrl;
+        window.URL = currentUrl;
+        observer_assigner(currentUrl); // Re-run your logic
+    }
+}
+
+setInterval(checkUrlChange, 1000); // Check every second
+
 var tags = {
     Home: ["YTD-RICH-ITEM-RENDERER", "YTD-RICH-SECTION-RENDERER"],
     Watch: ["YTD-COMPACT-VIDEO-RENDERER", ""],
@@ -63,9 +78,11 @@ function observer_assigner(url) {
 }
 function dialoguebox_adding() {
     console.log("search removing counts : ", search_removing_counts);
+    if(document.querySelector("#detoxify-confirmation-dialog")) return;
 
     // Create the dialog box
     const dialog = document.createElement("div");
+    dialog.id = "detoxify-confirmation-dialog";
     dialog.style.position = "fixed";
     dialog.style.top = "50%";
     dialog.style.left = "50%";
@@ -415,13 +432,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             // // Reset tracking sets for processed content
             // processedElements = new WeakSet();
             // processedSections = new WeakSet();
-
-            // Disconnect existing observer if it exists
-            if (observer) {
-                observer.disconnect();
-                observer = null;
-            }
-            window.observerRunning = false;
         }
 
         // Only setup observer and filter if filtering is enabled
