@@ -3,7 +3,8 @@
 
 <img src="cover.png?v=2" width="100%" alt="Detoxify Logo">
 
-> Detoxify : Impossible to be Distracted.
+> Smart Content Filtering for a Better YouTube Experience
+Detoxify: Impossible To Be Distracted.
 
 Detoxify is an AI-powered Chrome extension that uses Google's Gemini AI to intelligently filter your YouTube feed based on your preferences, helping you focus on content that matters to you.
 

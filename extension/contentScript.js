@@ -13,6 +13,21 @@ document
 
 var search_removing_counts = 0;
 
+// Add this near your observer setup
+let lastUrl = window.location.href;
+
+function checkUrlChange() {
+    const currentUrl = window.location.href;
+    if (currentUrl !== lastUrl) {
+        console.log('[contentscript.js]: URL switched from', lastUrl, 'to', currentUrl);
+        lastUrl = currentUrl;
+        window.URL = currentUrl;
+        observer_assigner(currentUrl); // Re-run your logic
+    }
+}
+
+setInterval(checkUrlChange, 1000); // Check every second
+
 var tags = {
     Home: ["YTD-RICH-ITEM-RENDERER", "YTD-RICH-SECTION-RENDERER"],
     Watch: ["YTD-COMPACT-VIDEO-RENDERER", ""],
@@ -61,42 +76,90 @@ function observer_assigner(url) {
         setupObserver(tags[determineUrlType(url)]);
     }
 }
-
-function dialoguebox_adding(){
+function dialoguebox_adding() {
     console.log("search removing counts : ", search_removing_counts);
+    if(document.querySelector("#detoxify-confirmation-dialog")) return;
+
+    // Create the dialog box
     const dialog = document.createElement("div");
+    dialog.id = "detoxify-confirmation-dialog";
     dialog.style.position = "fixed";
     dialog.style.top = "50%";
     dialog.style.left = "50%";
-    dialog.style.transform = "translate(-25%, -25%)";
-    dialog.style.backgroundColor = "white";
-    dialog.style.padding = "100px";
-    dialog.style.border = "1px solid black";
+    dialog.style.transform = "translate(-50%, -50%)";
+    dialog.style.backgroundColor = "#ffffff"; // White background
+    dialog.style.padding = "24px"; // Slightly increased for balance
+    dialog.style.borderRadius = "12px"; // Softer, modern rounding
+    dialog.style.boxShadow = "0 8px 16px rgba(0, 0, 0, 0.2)"; // Deeper shadow for techy depth
+    dialog.style.width = "320px"; // Slightly wider for better text fit
+    dialog.style.fontFamily = "'Inter', 'Helvetica Neue', sans-serif"; // Techy font
+    dialog.style.zIndex = "9999";
 
+    // Create and style the message
     const message = document.createElement("p");
-    message.textContent =
-        "[Detoxify] Are you sure you want to be in this page?";
+    message.innerHTML = "<span style='color: #000000;'>[Detoxify]</span> Are you sure you want to stay on this page?";
+    message.style.fontSize = "16px";
+    message.style.fontWeight = "500"; // Medium weight for emphasis
+    message.style.color = "#333333"; // Dark gray for readability
+    message.style.textAlign = "center"; // Centered for minimalism
+    message.style.marginBottom = "24px"; // Increased spacing
     dialog.appendChild(message);
 
+    // Create a container for buttons
+    const buttonContainer = document.createElement("div");
+    buttonContainer.style.display = "flex";
+    buttonContainer.style.justifyContent = "space-between"; // Evenly spaced buttons
+    buttonContainer.style.gap = "12px"; // Consistent spacing
+
+    // Create and style the Yes button
     const yesButton = document.createElement("button");
     yesButton.textContent = "Yes";
+    yesButton.style.padding = "10px 0"; // Vertical padding only, width handled by flex
+    yesButton.style.width = "100%"; // Full width within container
+    yesButton.style.border = "1px solid #000000"; // Black border
+    yesButton.style.borderRadius = "6px"; // Slightly larger rounding
+    yesButton.style.cursor = "pointer";
+    yesButton.style.backgroundColor = "#000000"; // Black background
+    yesButton.style.color = "#ffffff"; // White text
+    yesButton.style.fontSize = "14px";
+    yesButton.style.fontWeight = "500";
+    yesButton.style.transition = "background-color 0.2s ease"; // Smooth hover effect
+    yesButton.onmouseover = () => (yesButton.style.backgroundColor = "#333333"); // Dark gray on hover
+    yesButton.onmouseout = () => (yesButton.style.backgroundColor = "#000000"); // Back to black
     yesButton.onclick = () => {
         window.filterEnabled = false;
         chrome.storage.sync.set({ FILTER_ENABLED: false });
         document.body.removeChild(dialog);
     };
-    dialog.appendChild(yesButton);
 
+    // Create and style the No button
     const noButton = document.createElement("button");
     noButton.textContent = "No";
+    noButton.style.padding = "10px 0";
+    noButton.style.width = "100%"; // Full width within container
+    noButton.style.border = "1px solid #000000"; // Black border
+    noButton.style.borderRadius = "6px";
+    noButton.style.cursor = "pointer";
+    noButton.style.backgroundColor = "#ffffff"; // White background
+    noButton.style.color = "#000000"; // Black text
+    noButton.style.fontSize = "14px";
+    noButton.style.fontWeight = "500";
+    noButton.style.transition = "background-color 0.2s ease"; // Smooth hover effect
+    noButton.onmouseover = () => (noButton.style.backgroundColor = "#f5f5f5"); // Light gray on hover
+    noButton.onmouseout = () => (noButton.style.backgroundColor = "#ffffff"); // Back to white
     noButton.onclick = () => {
         window.location.href = "https://www.youtube.com";
-        // Dialog removal optional, as redirect unloads the page
     };
-    dialog.appendChild(noButton);
 
+    // Append buttons to the container, then container to dialog
+    buttonContainer.appendChild(yesButton);
+    buttonContainer.appendChild(noButton);
+    dialog.appendChild(buttonContainer);
+
+    // Append dialog to the body
     document.body.appendChild(dialog);
 }
+
 
 function isrelevantpage() {
     console.log("initialising setInterval  page");
@@ -369,13 +432,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             // // Reset tracking sets for processed content
             // processedElements = new WeakSet();
             // processedSections = new WeakSet();
-
-            // Disconnect existing observer if it exists
-            if (observer) {
-                observer.disconnect();
-                observer = null;
-            }
-            window.observerRunning = false;
         }
 
         // Only setup observer and filter if filtering is enabled
