@@ -12,11 +12,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             apiKeyContainer.style.display = 'block';
         }
 
-        // Restore saved category selection
+        // Restore saved category
         if (result.USER_CATEGORY) {
-            const savedCategory = document.querySelector(`input[value="${result.USER_CATEGORY}"]`);
-            if (savedCategory) {
-                savedCategory.checked = true;
+            // Set the value in the text input field
+            const categoryInput = document.getElementById('userCategory');
+            if (categoryInput) {
+                categoryInput.value = result.USER_CATEGORY;
                 // Update button text to indicate category can be changed
                 const searchButton = document.getElementById("searchButton");
                 searchButton.textContent = "Apply Filter";
@@ -77,14 +78,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Search button click handler
     const searchButton = document.getElementById("searchButton");
     searchButton.addEventListener("click", async () => {
-        const selectedCategory = document.querySelector('input[name="category"]:checked');
+        const categoryInput = document.getElementById('userCategory');
+        const category = categoryInput.value.trim();
         
-        if (!selectedCategory) {
-            alert('Please select a category');
+        if (!category) {
+            alert('Please enter a category');
             return;
         }
 
-        const category = selectedCategory.value;
         const isFilterEnabled = document.getElementById('filterToggle').checked;
         
         // Save the selected category and filter state
@@ -116,12 +117,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     });
 
-    // Add event listeners to radio buttons to enable the Apply Filter button
-    const categoryRadios = document.querySelectorAll('input[name="category"]');
-    categoryRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
+    // Add event listener to category input to enable the Apply Filter button
+    const categoryInput = document.getElementById('userCategory');
+    categoryInput.addEventListener('input', () => {
+        if (categoryInput.value.trim()) {
             searchButton.classList.add('active');
-        });
+        } else {
+            searchButton.classList.remove('active');
+        }
     });
     
     // Add event listener for batch size slider

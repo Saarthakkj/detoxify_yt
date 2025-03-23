@@ -111,16 +111,19 @@ input:checked + .slider:before {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.radio-group {
-    display: flex;
-    align-items: center;
+.category-input {
+    width: 100%;
     padding: 8px;
-    border-radius: 6px;
-    transition: background-color 0.2s;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-top: 5px;
 }
 
-.radio-group:hover {
-    background-color: #f1f3f4;
+.category-input:focus {
+    border-color: #1a73e8;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
 }
 
 input[type="radio"] {
@@ -155,9 +158,8 @@ input[type="radio"]:checked + label {
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
-    transition: background-color 0.2s;
-    opacity: 0.6;
-    transition: opacity 0.3s ease;
+    transition: all 0.2s;
+    opacity: 1;
 }
 
 #searchButton:hover {
@@ -166,14 +168,6 @@ input[type="radio"]:checked + label {
 
 #searchButton:active {
     background: #174ea6;
-}
-
-#searchButton.active {
-    opacity: 1;
-}
-
-input[name="category"]:checked ~ #searchButton {
-    opacity: 1;
 }
 
 .api-key-container {

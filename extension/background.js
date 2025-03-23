@@ -31,11 +31,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     await initializeModel();
                 }
 
-                // Send the entire array of titles
                 const prompt = JSON.stringify(request.data);
+                console.log("[background.js] Prompt:", prompt);
                 const result = await genModel.generateContent(prompt);
                 const response = await result.response;
-                // ... existing code ...
                 let text = response.text();
 
                 // Remove Markdown code block formatting if present
@@ -43,20 +42,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     text = text.slice(7, -3).trim();
                 }
 
-                // Split the string into an array of categories
-                const categories = text
-                    .replace(/[\[\]"]/g, '') // Remove brackets and quotes
-                    .split(',') // Split by comma
-                    .map(category => category.trim()); // Trim whitespace
-
-                // Map the categories to the expected format
-                const t_dash_vector = request.data.map((item, index) => ({
-                    input_text: item.text,
-                    predicted_label: categories[index] || 'other' // Default to 'other' if no category
-                }));
-
-                console.log("[background.js] Inference successful:", t_dash_vector);
-                sendResponse(t_dash_vector);
+                try {
+                    // Parse the JSON response directly
+                    const parsedResponse = JSON.parse(text);
+                    console.log("[background.js] Parsed response:", parsedResponse);
+                    
+                    // Validate the response format
+                    if (Array.isArray(parsedResponse) && 
+                        parsedResponse.every(item => 
+                            item.hasOwnProperty('input_text') && 
+                            item.hasOwnProperty('predicted_label') &&
+                            (item.predicted_label === "true" || item.predicted_label === "false")
+                        )) {
+                        console.log("[background.js] Inference successful:", parsedResponse);
+                        sendResponse(parsedResponse);
+                    } else {
+                        throw new Error("Invalid response format");
+                    }
+                } catch (parseError) {
+                    console.error("[background.js] Error parsing model response:", parseError);
+                    console.error("[background.js] Raw response:", text);
+                    sendResponse([]);
+                }
 
             } catch (error) {
                 console.error("[background.js] Inference error:", error);
@@ -68,10 +75,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-
-
 // Initialize on install and startup
 chrome.runtime.onStartup.addListener(initializeModel);
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url) {
+    console.log("[background.js]: Tab updated:", tab.url);
+    
+    // Get the current user settings from storage before sending message
+    chrome.storage.sync.get(['FILTER_ENABLED', 'USER_CATEGORY', 'BATCH_SIZE'], (result) => {
+      // Default to enabled if not set
+      const filterEnabled = result.FILTER_ENABLED !== false;
+      // Default batch size to 15 if not set
+      const batchSize = result.BATCH_SIZE || 15;
+      
+      chrome.tabs.sendMessage(tabId, {
+        action: "tabUpdated",
+        url: tab.url,
+        filterEnabled: filterEnabled,
+        userCategory: result.USER_CATEGORY,
+        batchSize: batchSize
+      }).catch(err => {
+        console.log("caught an error in sending message to the tab : " , err);
+      });
+    });
+  }
+});
 
 //! store your api key running this permanently in your browser:
 

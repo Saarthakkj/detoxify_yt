@@ -10,7 +10,7 @@
     <div id="root">
         <div class="header">
             <h1>Detoxify</h1>
-            <p class="subtitle">Select content to filter</p>
+            <p class="subtitle">Enter content to filter</p>
         </div>
         
         <div class="toggle-container">
@@ -35,28 +35,15 @@
         </div>
         
         <div class="category-container">
-            <div class="radio-group">
-                <input type="radio" id="coding" name="category" value="coding">
-                <label for="coding">
-                    <span class="radio-icon">💻</span>
-                    Coding
-                </label>
-            </div>
-            
-            <div class="radio-group">
-                <input type="radio" id="chess" name="category" value="chess">
-                <label for="chess">
-                    <span class="radio-icon">♟️</span>
-                    Chess
-                </label>
-            </div>
-            
-            <div class="radio-group">
-                <input type="radio" id="math" name="category" value="math">
-                <label for="math">
-                    <span class="radio-icon">📐</span>
-                    Maths
-                </label>
+            <div class="input-group">
+                <label for="userCategory">Filter Category:</label>
+                <input 
+                    type="text" 
+                    id="userCategory" 
+                    name="userCategory" 
+                    placeholder="Enter category (e.g., coding, chess)"
+                    class="category-input"
+                >
             </div>
         </div>
 

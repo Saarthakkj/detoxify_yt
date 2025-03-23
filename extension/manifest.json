@@ -3,20 +3,15 @@
   "version": "0.2.0",
   "description": "Filtering YT videos",
   "author": "Saarthak Saxena",
-  "privacy_policy": "https://github.com/Saarthakkj/detoxify_yt/blob/main/PRIVACY.md",
-  "content_security_policy": {
+    "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
-  "permissions": [
-    "scripting",
-    "activeTab",
-    "storage"
-  ],
+  "permissions": ["scripting", "activeTab", "storage", "tabs"],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/*",
-    "*://*.youtube.com/*",
-    "*://*.youtu.be/*" ,
-    "*://*.googlevideo.com/*"
+    "https://www.youtube.com/*",
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -24,14 +19,13 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],  
-      "js": ["contentScript.js"] , 
-      "run_at": "document_end"
+     "matches": ["<all_urls>"],
+      "js": ["contentScript.js"]
     }
   ],
   "web_accessible_resources": [
     {
-      "matches": ["https://*.youtube.com/*"],  
+      "matches": ["https://www.youtube.com/*"],
       "resources": ["popup.css", "popup.js", "cross.png"]
     }
   ],
