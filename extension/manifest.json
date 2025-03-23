@@ -32,7 +32,7 @@
   "action": {
     "default_title": "Detoxify",
     "default_popup": "popup.html",
-    "default_icon": "icons/icon.png"
+    "default_icon": "icons/icon.jpg"
   },
   "manifest_version": 3
 }
