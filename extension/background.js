@@ -7,7 +7,7 @@ async function initializeModel() {
     try {
         const result = await chrome.storage.sync.get(['GEMINI_API_KEY']);
         const GEMINI_API_KEY = result.GEMINI_API_KEY;
-        if (!GEMINI_API_KEY) {
+        if (!GEMINI_API_KEY) {t
             throw new Error('API key not found');
         }
         const genai = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -15,7 +15,7 @@ async function initializeModel() {
             model: "gemini-2.0-flash-lite-preview-02-05",
             systemInstruction: system_prompt
         });
-        console.log("[background.js] Gemini model initialized successfully");
+        console.log("[background.js] Gemini model iniialized successfully");
     } catch (e) {
         console.log("[background.js] Error initializing model:", e);
     }

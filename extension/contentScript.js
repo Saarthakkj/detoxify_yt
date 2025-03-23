@@ -758,23 +758,12 @@ var filterVideos = async (elements, tag) => {
             elements = await waitForElements(tag);
         }
 
-        // console.log("elements : ", elements);
-
-        // // Filter out already processed elements
-        // elements = elements.filter(el => !processedElements.has(el));
-        // if (elements.length === 0) return; // Exit if no new elements
-
-        // // Mark elements as processed
-        // elements.forEach(el => processedElements.add(el));
-
-        //elements only contains video titles (not shorts) ;
-
-        // console.log("elements after filtering : ", elements);
-
         try {
             // console.log("elements ;" , elements) ;
             let titleVector = await scrapperTitleVector(elements);
-            console.log("title vector : ", titleVector);
+            // console.log("title vector : ", titleVector);
+            const mapped_elements = {"elements" : elements , "titleVector" : titleVector} ;
+            console.log("mapped elements : ", mapped_elements);
             let t_vector = titleVector.map((title) => ({ text: title }));
             console.log("api request sent....", t_vector);
 
@@ -800,6 +789,8 @@ var filterVideos = async (elements, tag) => {
                     );
                 }
             }
+            console.log("MOMENT OF TRUTH : " , t_vector.length === t_dash_vector.length && t_dash_vector.length === elements.length);
+
 
             // console.log("t dash vector : " , t_dash_vector);
             let i = 0;
@@ -817,9 +808,8 @@ var filterVideos = async (elements, tag) => {
                         if (!titleElement) continue;
 
                         //? optimise this O(n) function:
-                        const t_dash_item = t_dash_vector.find(
-                            (item) => item.input_text === titleElement.textContent.trim()
-                        );
+                        //! ONLY IF ELEMENTS LENGTH === T_VECTOR LENGTH === T_DASH_VECTOR LENGTH
+                        const t_dash_item = t_dash_vector[i];
                         if (!t_dash_item) continue;
                         // console.log("t_dash_item.predicted_label  , ",  t_dash_item.predicted_label , " string : " , window.userCategory) ;
 
